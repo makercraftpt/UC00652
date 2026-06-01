@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 4 — FF-JK e T · Contadores · UC00652</title>
+  <style>
+    :root {
+      --navy:   #0A1F3C;
+      --navy2:  #0F2A4A;
+      --navy3:  #071629;
+      --signal: #00C5FF;
+      --green:  #1E8449;
+      --amber:  #D68910;
+      --red:    #C0392B;
+      --text:   #E8EDF5;
+      --muted:  #7A96B4;
+      --border: #1A3A5C;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width:100%; height:100%; background:#000; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+
+    #deck { width:100vw; height:100vh; position:relative; }
+
+    .slide {
+      position:absolute; inset:0;
+      background:var(--navy);
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none;
+      transition:opacity 0.35s ease;
+    }
+    .slide.active { opacity:1; pointer-events:auto; }
+
+    .slide::before {
+      content:''; position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(0,197,255,0.03) 1px, transparent 1px);
+      background-size:50px 50px; pointer-events:none;
+    }
+
+    /* ── HEADER ── */
+    .slide-header {
+      background:var(--navy3); border-bottom:2px solid var(--signal);
+      padding:0.7rem 2.2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      position:relative; z-index:1; flex-shrink:0;
+    }
+    .slide-header h2 { font-size:1.25rem; font-weight:700; color:#fff; }
+    .slide-header .sub { font-size:0.75rem; color:var(--signal); font-style:italic; }
+    .slide-num { font-size:0.7rem; color:var(--muted); font-weight:600; letter-spacing:.05em; }
+
+    /* ── BODY LAYOUTS ── */
+    .slide-body { flex:1; display:flex; position:relative; z-index:1; overflow:hidden; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+    .wide-left  { grid-template-columns:3fr 2fr; }
+    .wide-right { grid-template-columns:2fr 3fr; }
+    .col { padding:1.3rem 1.8rem; display:flex; flex-direction:column; gap:0.8rem; }
+    .col + .col { border-left:1px solid var(--border); }
+    .full { padding:1.3rem 2.2rem; width:100%; display:flex; flex-direction:column; gap:0.9rem; }
+
+    /* ── TITLE SLIDE ── */
+    #s1 { justify-content:center; align-items:center; text-align:center; }
+    #s1::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 40%, rgba(0,197,255,0.08) 0%, transparent 70%); }
+    #s1 .tc { position:relative; z-index:2; }
+    .pill {
+      display:inline-block;
+      background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3);
+      color:var(--signal); font-size:0.75rem; font-weight:700; letter-spacing:.12em;
+      text-transform:uppercase; padding:.35rem 1rem; border-radius:20px; margin-bottom:1.5rem;
+    }
+    #s1 h1 { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; color:#fff; line-height:1.15; margin-bottom:.5rem; }
+    #s1 h1 em { font-style:normal; color:var(--signal); }
+    #s1 .tagline { font-size:.95rem; color:var(--muted); margin-top:.8rem; }
+    #s1 .tagline span { color:rgba(0,197,255,0.6); margin:0 .4rem; }
+    #s1 .course-id { margin-top:2.5rem; font-size:.78rem; color:var(--muted); }
+
+    /* ── OBJECTIVES ── */
+    .obj-grid { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; width:100%; }
+    .obj-item {
+      background:var(--navy2); border:1px solid var(--border); border-radius:8px;
+      padding:.85rem 1rem; display:flex; gap:.75rem; align-items:flex-start;
+    }
+    .obj-icon { font-size:1.3rem; flex-shrink:0; line-height:1; margin-top:.1rem; }
+    .obj-title { font-size:.86rem; font-weight:700; color:#fff; margin-bottom:.2rem; }
+    .obj-desc  { font-size:.74rem; color:var(--muted); line-height:1.4; }
+
+    /* ── TYPOGRAPHY ── */
+    h3 {
+      font-size:.72rem; font-weight:800; color:var(--signal);
+      text-transform:uppercase; letter-spacing:.08em;
+      border-bottom:1px solid var(--border); padding-bottom:.35rem;
+    }
+    .note {
+      font-size:.8rem; color:var(--muted); background:rgba(0,197,255,0.05);
+      border-left:3px solid rgba(0,197,255,0.35); padding:.5rem .9rem;
+      border-radius:0 5px 5px 0; line-height:1.5;
+    }
+    .note.amber { border-left-color:var(--amber); background:rgba(214,137,16,0.06); color:#E8C070; }
+    .note.red   { border-left-color:var(--red);   background:rgba(192,57,43,0.08);  color:#E87070; }
+    .note.green { border-left-color:var(--green);  background:rgba(30,132,73,0.08);  color:#6FCF97; }
+
+    ul.pts { list-style:none; display:flex; flex-direction:column; gap:.4rem; }
+    ul.pts li {
+      font-size:.86rem; color:var(--text);
+      display:flex; gap:.6rem; align-items:flex-start; line-height:1.45;
+    }
+    ul.pts li::before { content:'▸'; color:var(--signal); flex-shrink:0; margin-top:.05rem; font-size:.75rem; }
+
+    /* ── TRUTH TABLES ── */
+    table.tt { width:100%; border-collapse:collapse; font-size:.82rem; }
+    table.tt th {
+      background:rgba(0,197,255,0.12); color:var(--signal); font-weight:700;
+      padding:.4rem .6rem; text-align:center; border:1px solid var(--border);
+      font-size:.73rem; letter-spacing:.04em;
+    }
+    table.tt td { padding:.38rem .6rem; text-align:center; border:1px solid var(--border); color:var(--text); }
+    table.tt tr:nth-child(even) td { background:rgba(255,255,255,0.03); }
+    table.tt tr.forbidden td { background:rgba(192,57,43,0.18); color:#E87070; font-weight:700; }
+    table.tt tr.highlight td { background:rgba(0,197,255,0.1); color:var(--signal); font-weight:700; }
+    table.tt tr.toggle td { background:rgba(30,132,73,0.15); color:#6FCF97; font-weight:700; }
+
+    /* ── SVG TIMING DIAGRAMS ── */
+    .timing-wrap {
+      background:var(--navy2); border:1px solid var(--border);
+      border-radius:8px; padding:.7rem;
+      display:flex; justify-content:center; align-items:center;
+    }
+    .timing-wrap svg text { font-family:'Segoe UI',sans-serif; }
+
+    /* ── COMPARISON BOXES ── */
+    .evo-box { border:1px solid var(--border); border-radius:8px; overflow:hidden; flex:1; }
+    .evo-header { padding:.45rem 1rem; font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .evo-header.old { background:rgba(192,57,43,0.15); color:#E87070; }
+    .evo-header.new { background:rgba(30,132,73,0.15); color:#6FCF97; }
+    .evo-body { padding:.75rem 1rem; font-size:.8rem; }
+
+    /* ── COUNTER BLOCK DIAGRAM ── */
+    .counter-chain {
+      display:flex; align-items:center; gap:0;
+      background:var(--navy2); border:1px solid var(--border);
+      border-radius:8px; padding:.8rem 1rem; overflow-x:auto;
+    }
+    .ff-block {
+      background:rgba(0,197,255,0.08); border:1px solid rgba(0,197,255,0.3);
+      border-radius:6px; padding:.5rem .8rem; text-align:center;
+      flex-shrink:0; min-width:64px;
+    }
+    .ff-block .ff-label { font-size:.65rem; color:var(--signal); font-weight:700; letter-spacing:.06em; }
+    .ff-block .ff-out   { font-size:.9rem; font-weight:800; color:#fff; margin-top:.2rem; }
+    .ff-block .ff-div   { font-size:.62rem; color:var(--muted); margin-top:.1rem; }
+    .chain-arrow {
+      color:var(--muted); font-size:1.2rem; padding:0 .5rem; flex-shrink:0;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .chain-arrow .clk-label { font-size:.6rem; color:var(--muted); margin-top:.1rem; white-space:nowrap; }
+
+    /* ── vs BOXES ── */
+    .vs-box  { border:1px solid var(--border); border-radius:8px; overflow:hidden; flex:1; }
+    .vs-head { padding:.45rem 1rem; font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .vs-async .vs-head { background:rgba(214,137,16,0.15); color:var(--amber); }
+    .vs-sync  .vs-head { background:rgba(0,197,255,0.12);  color:var(--signal); }
+    .vs-body  { padding:.8rem 1rem; font-size:.8rem; color:var(--text); display:flex; flex-direction:column; gap:.45rem; }
+    .vs-body .muted { color:var(--muted); font-size:.75rem; }
+
+    /* ── 74193 PIN TABLE ── */
+    .pin-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .pin-row {
+      background:var(--navy2); border:1px solid var(--border); border-radius:6px;
+      padding:.5rem .8rem; display:flex; gap:.6rem; align-items:center;
+    }
+    .pin-name {
+      background:rgba(0,197,255,0.12); color:var(--signal);
+      font-size:.7rem; font-weight:800; padding:.15rem .45rem;
+      border-radius:4px; flex-shrink:0; min-width:48px; text-align:center;
+      font-family:monospace; letter-spacing:.03em;
+    }
+    .pin-desc { font-size:.78rem; color:var(--text); line-height:1.3; }
+    .pin-desc .sub { font-size:.7rem; color:var(--muted); display:block; }
+
+    /* ── WORK PLAN ── */
+    .ex-list { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; }
+    .ex-item { background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.65rem .9rem; display:flex; gap:.75rem; align-items:flex-start; }
+    .ex-num { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.68rem; font-weight:800; padding:.15rem .4rem; border-radius:4px; flex-shrink:0; margin-top:.1rem; }
+    .ex-title { font-size:.84rem; font-weight:700; color:#fff; margin-bottom:.18rem; }
+    .ex-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+
+    /* ── NAV ── */
+    #nav { position:fixed; bottom:1.2rem; right:1.5rem; display:flex; align-items:center; gap:.6rem; z-index:100; }
+    .nav-btn {
+      background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal);
+      width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1rem;
+      display:flex; align-items:center; justify-content:center; transition:background .15s;
+    }
+    .nav-btn:hover { background:rgba(0,197,255,0.25); }
+    .nav-btn:disabled { opacity:.3; cursor:default; }
+    #slide-counter { font-size:.72rem; color:var(--muted); min-width:40px; text-align:center; font-weight:600; }
+    #dots { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); display:flex; gap:.45rem; z-index:100; }
+    .dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15); cursor:pointer; transition:background .2s, transform .2s; }
+    .dot.active { background:var(--signal); transform:scale(1.4); }
+    #back-btn {
+      position:fixed; top:.7rem; right:1.2rem; z-index:100;
+      background:rgba(0,197,255,0.1); border:1px solid rgba(0,197,255,0.25);
+      color:var(--signal); font-size:.7rem; font-weight:700;
+      padding:.3rem .8rem; border-radius:5px; text-decoration:none;
+      letter-spacing:.06em; transition:background .15s;
+    }
+    #back-btn:hover { background:rgba(0,197,255,0.22); }
+  </style>
+</head>
+<body>
+
+<a id="back-btn" href="../index.html">← UC00652</a>
+<div id="deck">
+
+<!-- ═══ SLIDE 1 — TÍTULO ═══ -->
+<div class="slide active" id="s1">
+  <div class="tc">
+    <div class="pill">Aula 4 · UC00652 · 2025–2026</div>
+    <h1>Flip-Flops <em>JK e T</em> · Contadores</h1>
+    <div class="tagline">
+      FF-JK <span>·</span> FF-T <span>·</span> Contador Assíncrono <span>·</span> 74193 <span>·</span> Logisim
+    </div>
+    <div class="course-id">UC00652 – Otimizar e implementar circuitos lógicos</div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2 — OBJETIVOS ═══ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <div><h2>Objetivos da Aula</h2><div class="sub">O que vamos fazer hoje</div></div>
+    <div class="slide-num">2 / 9</div>
+  </div>
+  <div class="slide-body full">
+    <div class="obj-grid">
+      <div class="obj-item">
+        <div class="obj-icon">🔄</div>
+        <div>
+          <div class="obj-title">Flip-Flop JK — Toggle</div>
+          <div class="obj-desc">Compreender como o JK elimina o estado proibido do SR e introduz o modo Toggle (J=K=1)</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">÷</div>
+        <div>
+          <div class="obj-title">Flip-Flop T — Divisor de Frequência</div>
+          <div class="obj-desc">Derivar o FF-T a partir do JK e perceber a divisão de frequência por 2 em cascata</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">📟</div>
+        <div>
+          <div class="obj-title">Contador Assíncrono de 4 Bits</div>
+          <div class="obj-desc">Construir com 4 FF-T em cascata e observar a sequência binária 0000→1111</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">⚡</div>
+        <div>
+          <div class="obj-title">Assíncrono vs. Síncrono</div>
+          <div class="obj-desc">Perceber a diferença entre ripple counter e contador síncrono, e o atraso de propagação</div>
+        </div>
+      </div>
+      <div class="obj-item" style="grid-column:1/-1">
+        <div class="obj-icon">🔢</div>
+        <div>
+          <div class="obj-title">Chip 74193 — Contador Síncrono de 4 Bits</div>
+          <div class="obj-desc">Usar o 74193 no Logisim para contar para cima, para baixo, e carregar um valor inicial</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3 — DE SR PARA JK ═══ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <div><h2>A Evolução: SR → JK</h2><div class="sub">O que muda e porquê</div></div>
+    <div class="slide-num">3 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <div class="evo-box">
+        <div class="evo-header old">⚠️ SR Latch — o problema</div>
+        <div class="evo-body">
+          <table class="tt">
+            <thead><tr><th>S</th><th>R</th><th>Q_next</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>1</td><td>1</td><td>Set</td></tr>
+              <tr><td>1</td><td>0</td><td>0</td><td>Reset</td></tr>
+              <tr><td>1</td><td>1</td><td>Q</td><td>Hold</td></tr>
+              <tr class="forbidden"><td>0</td><td>0</td><td>⚠️</td><td>PROIBIDO</td></tr>
+            </tbody>
+          </table>
+          <div class="note red" style="margin-top:.6rem;font-size:.76rem">
+            S=R=0 (em lógica positiva) → Q e Q̄ ambos a 1 — inválido.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="evo-box">
+        <div class="evo-header new">✅ FF-JK — a solução</div>
+        <div class="evo-body">
+          <table class="tt">
+            <thead><tr><th>J</th><th>K</th><th>Q_next</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>0</td><td>Q</td><td>Hold</td></tr>
+              <tr><td>0</td><td>1</td><td>0</td><td>Reset</td></tr>
+              <tr><td>1</td><td>0</td><td>1</td><td>Set</td></tr>
+              <tr class="toggle"><td>1</td><td>1</td><td>Q̄</td><td>🔄 Toggle</td></tr>
+            </tbody>
+          </table>
+          <div class="note green" style="margin-top:.6rem;font-size:.76rem">
+            J=K=1 → Toggle! O estado proibido é substituído por uma função útil.
+          </div>
+        </div>
+      </div>
+      <ul class="pts" style="margin-top:.3rem">
+        <li>O FF-JK é <strong>edge-triggered</strong> (flanco ↑ ou ↓)</li>
+        <li>Toggle = Q inverte no próximo flanco</li>
+        <li>Base do FF-T e dos contadores</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4 — FF-JK TIMING ═══ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div><h2>Flip-Flop JK — Modo Toggle</h2><div class="sub">J = K = 1 → Q inverte a cada flanco ↑</div></div>
+    <div class="slide-num">4 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Tabela de verdade completa</h3>
+      <table class="tt">
+        <thead><tr><th>J</th><th>K</th><th>Q_next</th><th>Função</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0</td><td>Q</td><td>Hold (memória)</td></tr>
+          <tr><td>0</td><td>1</td><td>0</td><td>Reset</td></tr>
+          <tr><td>1</td><td>0</td><td>1</td><td>Set</td></tr>
+          <tr class="toggle"><td>1</td><td>1</td><td>Q̄</td><td>Toggle</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="font-size:.78rem">
+        O FF-JK só muda de estado no <strong>flanco activo</strong> do clock — entre flancos, Q mantém-se.
+      </div>
+      <div class="note amber" style="font-size:.78rem">
+        Com J=K=1, Q divide a frequência do clock por 2.
+      </div>
+    </div>
+    <div class="col" style="justify-content:center;">
+      <h3>Cronograma — J=K=1 (Toggle)</h3>
+      <!-- SVG timing diagram: CLK + Q toggle, 4 cycles -->
+      <div class="timing-wrap">
+        <svg viewBox="0 0 380 90" width="100%" style="max-height:160px">
+          <!-- labels -->
+          <text x="44" y="22" text-anchor="end" font-size="11" fill="#7A96B4">CLK</text>
+          <text x="44" y="66" text-anchor="end" font-size="11" fill="#D68910">Q</text>
+          <!-- rising edge markers -->
+          <line x1="90"  y1="2" x2="90"  y2="85" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="170" y1="2" x2="170" y2="85" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="250" y1="2" x2="250" y2="85" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="330" y1="2" x2="330" y2="85" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- ↑ labels -->
+          <text x="90"  y="8" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.5)">↑</text>
+          <text x="170" y="8" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.5)">↑</text>
+          <text x="250" y="8" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.5)">↑</text>
+          <text x="330" y="8" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.5)">↑</text>
+          <!-- CLK waveform (y_hi=12, y_lo=28) -->
+          <polyline points="50,28 90,28 90,12 130,12 130,28 170,28 170,12 210,12 210,28 250,28 250,12 290,12 290,28 330,28 330,12 370,12 370,28"
+            fill="none" stroke="#00C5FF" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Q waveform (y_hi=50, y_lo=70) — toggles at each ↑ -->
+          <polyline points="50,70 90,70 90,50 170,50 170,70 250,70 250,50 330,50 330,70 370,70"
+            fill="none" stroke="#D68910" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Q value labels -->
+          <text x="70"  y="65" text-anchor="middle" font-size="9" fill="#D68910">0</text>
+          <text x="130" y="48" text-anchor="middle" font-size="9" fill="#D68910">1</text>
+          <text x="210" y="65" text-anchor="middle" font-size="9" fill="#D68910">0</text>
+          <text x="290" y="48" text-anchor="middle" font-size="9" fill="#D68910">1</text>
+        </svg>
+      </div>
+      <div class="note green" style="font-size:.76rem">
+        Frequência de Q = Frequência CLK ÷ 2 → base de todos os contadores.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5 — FF-T ═══ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <div><h2>Flip-Flop T — Divisor de Frequência</h2><div class="sub">Derivado do JK com J = K = T</div></div>
+    <div class="slide-num">5 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Tabela e derivação</h3>
+      <table class="tt">
+        <thead><tr><th>T</th><th>Q_next</th><th>Função</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>Q</td><td>Hold (J=K=0)</td></tr>
+          <tr class="toggle"><td>1</td><td>Q̄</td><td>Toggle (J=K=1)</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="font-size:.78rem; margin-top:.3rem">
+        FF-T = FF-JK com J e K ligados juntos: <strong>T = J = K</strong>. Simplifica o contador.
+      </div>
+      <h3 style="margin-top:.5rem">Cascata de FF-T — divisão em cadeia</h3>
+      <div class="counter-chain">
+        <div style="text-align:center; font-size:.65rem; color:var(--muted); flex-shrink:0; margin-right:.5rem">CLK<br>entrada</div>
+        <div style="color:var(--muted); font-size:1rem; margin-right:.3rem">→</div>
+        <div class="ff-block">
+          <div class="ff-label">FF-T</div>
+          <div class="ff-out">Q₀</div>
+          <div class="ff-div">÷ 2</div>
+        </div>
+        <div class="chain-arrow">→<div class="clk-label">CLK₁=Q₀</div></div>
+        <div class="ff-block">
+          <div class="ff-label">FF-T</div>
+          <div class="ff-out">Q₁</div>
+          <div class="ff-div">÷ 4</div>
+        </div>
+        <div class="chain-arrow">→<div class="clk-label">CLK₂=Q₁</div></div>
+        <div class="ff-block">
+          <div class="ff-label">FF-T</div>
+          <div class="ff-out">Q₂</div>
+          <div class="ff-div">÷ 8</div>
+        </div>
+        <div class="chain-arrow">→<div class="clk-label">CLK₃=Q₂</div></div>
+        <div class="ff-block">
+          <div class="ff-label">FF-T</div>
+          <div class="ff-out">Q₃</div>
+          <div class="ff-div">÷ 16</div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="justify-content:center;">
+      <h3>Divisão de frequência — 4 ciclos de CLK</h3>
+      <!-- SVG: CLK, Q0 (÷2), Q1 (÷4) -->
+      <div class="timing-wrap">
+        <svg viewBox="0 0 380 145" width="100%" style="max-height:200px">
+          <!-- labels -->
+          <text x="44" y="22"  text-anchor="end" font-size="11" fill="#7A96B4">CLK</text>
+          <text x="44" y="66"  text-anchor="end" font-size="11" fill="#00C5FF">Q₀ ÷2</text>
+          <text x="44" y="112" text-anchor="end" font-size="11" fill="#D68910">Q₁ ÷4</text>
+          <!-- grid -->
+          <line x1="90"  y1="2" x2="90"  y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="170" y1="2" x2="170" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="250" y1="2" x2="250" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="330" y1="2" x2="330" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- CLK (y_hi=12, y_lo=28) -->
+          <polyline points="50,28 90,28 90,12 130,12 130,28 170,28 170,12 210,12 210,28 250,28 250,12 290,12 290,28 330,28 330,12 370,12 370,28"
+            fill="none" stroke="#7A96B4" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Q0 (y_hi=50, y_lo=70) — toggles at each CLK↑ -->
+          <polyline points="50,70 90,70 90,50 170,50 170,70 250,70 250,50 330,50 330,70 370,70"
+            fill="none" stroke="#00C5FF" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Q1 (y_hi=96, y_lo=116) — toggles at each Q0 falling edge (170, 330) -->
+          <polyline points="50,116 170,116 170,96 330,96 330,116 370,116"
+            fill="none" stroke="#D68910" stroke-width="2" stroke-linejoin="round"/>
+          <!-- period labels -->
+          <text x="110" y="138" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.45)">T_CLK</text>
+          <text x="210" y="138" text-anchor="middle" font-size="9" fill="rgba(0,197,255,0.45)">2×T</text>
+          <text x="300" y="138" text-anchor="middle" font-size="9" fill="#D68910" opacity=".6">4×T_CLK</text>
+        </svg>
+      </div>
+      <div class="note amber" style="font-size:.76rem">
+        Cada FF-T divide a frequência por 2. Com 4 FFs: 2⁴ = 16 estados → contador de módulo 16.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6 — CONTADOR ASSÍNCRONO ═══ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div><h2>Contador Assíncrono de 4 Bits</h2><div class="sub">Ripple counter — 4 FF-T em cascata → 0000 a 1111</div></div>
+    <div class="slide-num">6 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Cronograma — 8 pulsos de clock</h3>
+      <!-- SVG: CLK, Q0, Q1, Q2, Q3 — 8 cycles -->
+      <div class="timing-wrap" style="padding:.5rem">
+        <svg viewBox="0 0 490 215" width="100%" style="max-height:260px">
+          <!-- labels -->
+          <text x="54" y="22"  text-anchor="end" font-size="10" fill="#7A96B4">CLK</text>
+          <text x="54" y="57"  text-anchor="end" font-size="10" fill="#00C5FF">Q₀</text>
+          <text x="54" y="97"  text-anchor="end" font-size="10" fill="#D68910">Q₁</text>
+          <text x="54" y="137" text-anchor="end" font-size="10" fill="#6FCF97">Q₂</text>
+          <text x="54" y="177" text-anchor="end" font-size="10" fill="#FF8C8C">Q₃</text>
+
+          <!-- CLK rising edge dashes (x=80,130,180,230,280,330,380,430) -->
+          <line x1="80"  y1="2" x2="80"  y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="130" y1="2" x2="130" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="180" y1="2" x2="180" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="230" y1="2" x2="230" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="280" y1="2" x2="280" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="330" y1="2" x2="330" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="380" y1="2" x2="380" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+          <line x1="430" y1="2" x2="430" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="2,4"/>
+
+          <!-- count labels at bottom -->
+          <text x="55"  y="208" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.3)">0</text>
+          <text x="105" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">1</text>
+          <text x="155" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">2</text>
+          <text x="205" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">3</text>
+          <text x="255" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">4</text>
+          <text x="305" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">5</text>
+          <text x="355" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">6</text>
+          <text x="405" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">7</text>
+          <text x="455" y="208" text-anchor="middle" font-size="8" fill="rgba(0,197,255,0.7)">8</text>
+
+          <!-- CLK (y_hi=12, y_lo=28, half_period=25) 8 cycles = 16 half-periods -->
+          <polyline points="55,28 80,28 80,12 105,12 105,28 130,28 130,12 155,12 155,28 180,28 180,12 205,12 205,28 230,28 230,12 255,12 255,28 280,28 280,12 305,12 305,28 330,28 330,12 355,12 355,28 380,28 380,12 405,12 405,28 430,28 430,12 455,12 455,28"
+            fill="none" stroke="#7A96B4" stroke-width="1.5" stroke-linejoin="round"/>
+
+          <!-- Q0 (y_hi=46, y_lo=62) — toggles at: 80,130,180,230,280,330,380,430 -->
+          <polyline points="55,62 80,62 80,46 130,46 130,62 180,62 180,46 230,46 230,62 280,62 280,46 330,46 330,62 380,62 380,46 430,46 430,62 455,62"
+            fill="none" stroke="#00C5FF" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- Q1 (y_hi=86, y_lo=102) — toggles at Q0 falling edges: 130,230,330,430 -->
+          <polyline points="55,102 130,102 130,86 230,86 230,102 330,102 330,86 430,86 430,102 455,102"
+            fill="none" stroke="#D68910" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- Q2 (y_hi=126, y_lo=142) — toggles at Q1 falling edges: 230, 430 -->
+          <polyline points="55,142 230,142 230,126 430,126 430,142 455,142"
+            fill="none" stroke="#6FCF97" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- Q3 (y_hi=166, y_lo=182) — toggles at Q2 falling edge: 430 -->
+          <polyline points="55,182 430,182 430,166 455,166"
+            fill="none" stroke="#FF8C8C" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Sequência de contagem</h3>
+      <table class="tt" style="font-size:.76rem">
+        <thead><tr><th>CLK↑</th><th>Q₃</th><th>Q₂</th><th>Q₁</th><th>Q₀</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td>—</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+          <tr><td>2</td><td>0</td><td>0</td><td>1</td><td>0</td><td>2</td></tr>
+          <tr><td>3</td><td>0</td><td>0</td><td>1</td><td>1</td><td>3</td></tr>
+          <tr><td>4</td><td>0</td><td>1</td><td>0</td><td>0</td><td>4</td></tr>
+          <tr><td>5</td><td>0</td><td>1</td><td>0</td><td>1</td><td>5</td></tr>
+          <tr><td>6</td><td>0</td><td>1</td><td>1</td><td>0</td><td>6</td></tr>
+          <tr><td>7</td><td>0</td><td>1</td><td>1</td><td>1</td><td>7</td></tr>
+          <tr class="highlight"><td>8</td><td>1</td><td>0</td><td>0</td><td>0</td><td>8</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="font-size:.76rem">
+        Q₀ é o LSB (muda mais rápido). Q₃ é o MSB. Completa 16 estados com 16 pulsos (0→15).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7 — ASSÍNCRONO vs SÍNCRONO ═══ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <div><h2>Assíncrono vs. Síncrono</h2><div class="sub">Qual usar e porquê</div></div>
+    <div class="slide-num">7 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <div class="vs-box vs-async">
+        <div class="vs-head">🐢 Contador Assíncrono (Ripple)</div>
+        <div class="vs-body">
+          <div>Cada FF recebe o <strong>Q do anterior</strong> como clock</div>
+          <div>CLK → FF₀ → FF₁ → FF₂ → FF₃</div>
+          <div class="muted">→ Cada FF adiciona um atraso de propagação (t_pd)</div>
+          <ul class="pts" style="margin-top:.3rem">
+            <li>Simples de construir — poucos fios</li>
+            <li>Baixo consumo</li>
+            <li>Atraso cresce com o número de bits</li>
+            <li>Pode produzir glitches na saída durante a transição</li>
+          </ul>
+          <div class="note amber" style="margin-top:.5rem; font-size:.76rem">
+            ⚠️ Com 4 FFs: atraso total = 4 × t_pd. Problemático a altas frequências.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="vs-box vs-sync">
+        <div class="vs-head">⚡ Contador Síncrono</div>
+        <div class="vs-body">
+          <div>Todos os FFs recebem o <strong>mesmo clock</strong> simultaneamente</div>
+          <div>CLK → FF₀, FF₁, FF₂, FF₃ (em paralelo)</div>
+          <div class="muted">→ Lógica de controlo decide quando cada FF toggle</div>
+          <ul class="pts" style="margin-top:.3rem">
+            <li>Sem atraso de propagação acumulado</li>
+            <li>Mais rápido e mais fiável</li>
+            <li>Mais fios e portas lógicas de controlo</li>
+            <li>Usado em chips TTL como o <strong>74193</strong></li>
+          </ul>
+          <div class="note green" style="margin-top:.5rem; font-size:.76rem">
+            ✓ Para frequências altas ou circuitos críticos, usa sempre contador síncrono.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8 — 74193 ═══ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <div><h2>Chip 74193 — Contador Síncrono de 4 Bits</h2><div class="sub">Up/Down · Parallel Load · Clear · DIP-16</div></div>
+    <div class="slide-num">8 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Pinos principais (DIP-16)</h3>
+      <div class="pin-grid">
+        <div class="pin-row">
+          <div class="pin-name">UP (5)</div>
+          <div class="pin-desc">Clock para contar <strong>para cima</strong><span class="sub">DOWN deve estar HIGH</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">DOWN (4)</div>
+          <div class="pin-desc">Clock para contar <strong>para baixo</strong><span class="sub">UP deve estar HIGH</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">LOAD (11)</div>
+          <div class="pin-desc">Carga paralela — activo LOW<span class="sub">LOW → carrega A,B,C,D nas saídas</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">CLR (14)</div>
+          <div class="pin-desc">Reset assíncrono — activo HIGH<span class="sub">HIGH → Q=0000 imediatamente</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">A…D</div>
+          <div class="pin-desc">Entradas de dados paralelos<span class="sub">Carregados quando LOAD=0</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">QA…QD</div>
+          <div class="pin-desc">Saídas de 4 bits<span class="sub">QA=LSB, QD=MSB</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">CO (12)</div>
+          <div class="pin-desc">Carry Out — activo LOW<span class="sub">LOW quando conta além de 15</span></div>
+        </div>
+        <div class="pin-row">
+          <div class="pin-name">BO (13)</div>
+          <div class="pin-desc">Borrow Out — activo LOW<span class="sub">LOW quando conta abaixo de 0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Como usar no Logisim</h3>
+      <ul class="pts">
+        <li><strong>Contar para cima:</strong> pulsa UP; mantém DOWN=1; LOAD=1; CLR=0</li>
+        <li><strong>Contar para baixo:</strong> pulsa DOWN; mantém UP=1; LOAD=1; CLR=0</li>
+        <li><strong>Carregar valor inicial:</strong> coloca valor em A-D; pulsa LOAD=0 → 1</li>
+        <li><strong>Reset a 0:</strong> CLR=1 (assíncrono, não espera clock)</li>
+        <li><strong>Cascata de 2 chips (8 bits):</strong> CO do chip baixo → UP do chip alto</li>
+      </ul>
+      <div class="note green" style="margin-top:.5rem; font-size:.78rem">
+        ✓ Em Logisim: <em>Memory → Counter</em> é equivalente ao 74193. Usa o chip explícito para a breadboard.
+      </div>
+      <div class="note amber" style="font-size:.78rem">
+        ⚠️ Atenção: CO e BO são activos a LOW — um pino a 0 significa evento de carry/borrow.
+      </div>
+      <div class="note red" style="font-size:.78rem">
+        ⚠️ LOAD e CLR não respeitam o clock — são assíncronos! CLR tem prioridade sobre LOAD.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9 — PLANO TP04 ═══ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <div><h2>Plano de Trabalho — TP04</h2><div class="sub">O que fazer hoje na ficha</div></div>
+    <div class="slide-num">9 / 9</div>
+  </div>
+  <div class="slide-body full">
+    <div class="ex-list">
+      <div class="ex-item">
+        <div class="ex-num">Ex. 1</div>
+        <div>
+          <div class="ex-title">FF-JK no Logisim</div>
+          <div class="ex-desc">Testar os 4 estados · verificar Toggle com J=K=1 · observar Q no cronograma</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">Ex. 2</div>
+        <div>
+          <div class="ex-title">FF-T — Divisor de Frequência</div>
+          <div class="ex-desc">Ligar JK com J=K=1 · verificar que Q divide CLK por 2 · cascata de 2 FFs (÷4)</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">Ex. 3</div>
+        <div>
+          <div class="ex-title">Contador Assíncrono de 4 Bits</div>
+          <div class="ex-desc">4 FF-T em cascata · ligar Q ao CLK seguinte · verificar sequência 0→15</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">Ex. 4</div>
+        <div>
+          <div class="ex-title">74193 — Contar para Cima e Baixo</div>
+          <div class="ex-desc">Usar componente Logisim · testar UP / DOWN · carregar valor inicial com LOAD</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">Ex. 5</div>
+        <div>
+          <div class="ex-title">Cronograma do Contador</div>
+          <div class="ex-desc">Preencher Q₀ Q₁ Q₂ Q₃ para 8 pulsos · identificar o valor binário em cada instante</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">Ex. 6</div>
+        <div>
+          <div class="ex-title">Contador de Módulo N</div>
+          <div class="ex-desc">Usar CLR para resetar em N (ex: módulo 10 = conta 0 a 9) · implementar no 74193</div>
+        </div>
+      </div>
+    </div>
+    <div class="note" style="font-size:.77rem">
+      📌 Guarda o ficheiro Logisim como <strong>TP04_exercicios.circ</strong> — os contadores serão usados nos registos (Aula 5).
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- dots -->
+<div id="dots"></div>
+<!-- nav -->
+<div id="nav">
+  <button class="nav-btn" id="prev" onclick="go(-1)">‹</button>
+  <span id="slide-counter">1 / 9</span>
+  <button class="nav-btn" id="next" onclick="go(1)">›</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const dotsEl  = document.getElementById('dots');
+  const counter = document.getElementById('slide-counter');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  let cur = 0;
+  const N = slides.length;
+
+  for (let i = 0; i < N; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(idx) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(N - 1, idx));
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${N}`;
+    prevBtn.disabled = cur === 0;
+    nextBtn.disabled = cur === N - 1;
+  }
+
+  function go(dir) { goTo(cur + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') go(-1);
+  });
+
+  document.getElementById('deck').addEventListener('click', e => {
+    if (!e.target.closest('#nav') && !e.target.closest('#dots') && !e.target.closest('#back-btn')) go(1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
