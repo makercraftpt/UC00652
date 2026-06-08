@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UC00652 – Otimizar e Implementar Circuitos Lógicos</title>
+  <style>
+    :root {
+      --navy:       #0A1F3C;
+      --navy-mid:   #0F2A4A;
+      --navy-light: #122847;
+      --signal:     #00C5FF;
+      --green:      #1E8449;
+      --amber:      #D68910;
+      --red:        #C0392B;
+      --text:       #E8EDF5;
+      --muted:      #7A96B4;
+      --border:     #1A3A5C;
+      --card:       #0F2A4A;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      background: linear-gradient(160deg, #050E1C 0%, #0A1F3C 55%, #0D2847 100%);
+      border-bottom: 2px solid var(--signal);
+      padding: 2.5rem 2rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,197,255,0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+    }
+
+    /* dot at grid corners */
+    header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(0,197,255,0.12) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+    }
+
+    .header-inner {
+      position: relative;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .course-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0,197,255,0.12);
+      border: 1px solid rgba(0,197,255,0.28);
+      color: var(--signal);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      margin-bottom: 1.1rem;
+    }
+
+    .course-pill::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--signal);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 3vw, 2.1rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 0.6rem;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--signal);
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin-top: 0.5rem;
+    }
+
+    .header-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .header-meta span::before {
+      content: '▸';
+      color: var(--signal);
+      font-size: 0.7rem;
+    }
+
+    /* progress */
+    .progress-wrap {
+      margin-top: 1.8rem;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+
+    .progress-labels strong {
+      color: var(--signal);
+      font-weight: 700;
+    }
+
+    .progress-track {
+      background: rgba(255,255,255,0.07);
+      border-radius: 6px;
+      height: 7px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
+      height: 100%;
+      border-radius: 6px;
+      width: 40%;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 20px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* ─── MAIN ─── */
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+    }
+
+    /* section labels */
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--signal);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 2.8rem 0 1.4rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* ─── CARDS GRID ─── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.4rem 1.3rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    /* top colour stripe */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .card.done    { border-color: rgba(30,132,73,0.3); }
+    .card.done::before    { background: var(--green); }
+    .card.done:hover      { border-color: rgba(30,132,73,0.6); }
+
+    .card.current { border-color: rgba(0,197,255,0.35); }
+    .card.current::before { background: linear-gradient(90deg, var(--signal), #00E8FF); }
+    .card.current:hover   { border-color: rgba(0,197,255,0.6); }
+
+    .card.upcoming {
+      opacity: 0.45;
+      border-style: dashed;
+      border-color: var(--border);
+    }
+    .card.upcoming::before { background: var(--border); }
+    .card.upcoming:hover { opacity: 0.7; transform: none; }
+
+    /* card header row */
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+
+    .aula-num {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .badge-done    { background: rgba(30,132,73,0.18); color: #4CAF50; border: 1px solid rgba(30,132,73,0.35); }
+    .badge-current { background: rgba(0,197,255,0.14); color: var(--signal); border: 1px solid rgba(0,197,255,0.3); }
+    .badge-next    { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+
+    .badge-current::before {
+      content: '';
+      width: 5px; height: 5px;
+      background: var(--signal);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.9rem;
+      line-height: 1.3;
+    }
+
+    /* objectives box */
+    .obj-box {
+      background: rgba(0,0,0,0.22);
+      border-left: 3px solid rgba(0,197,255,0.4);
+      border-radius: 0 6px 6px 0;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .card.done .obj-box  { border-left-color: rgba(30,132,73,0.5); }
+
+    /* topics */
+    .topics {
+      list-style: none;
+      margin-bottom: 1rem;
+    }
+
+    .topics li {
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0.18rem 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .topics li::before {
+      content: '·';
+      color: var(--signal);
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+
+    .card.done .topics li::before { color: #4CAF50; }
+
+    /* concept tags */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .tag {
+      font-size: 0.67rem;
+      font-weight: 600;
+      background: rgba(0,197,255,0.07);
+      border: 1px solid rgba(0,197,255,0.15);
+      color: rgba(0,197,255,0.75);
+      padding: 0.12rem 0.45rem;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    .card.done .tag {
+      background: rgba(30,132,73,0.07);
+      border-color: rgba(30,132,73,0.2);
+      color: rgba(76,175,80,0.8);
+    }
+
+    /* material links */
+    .materials {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .mat-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 0.7rem;
+      border-radius: 5px;
+      text-decoration: none;
+      border: 1px solid;
+      transition: opacity 0.15s, transform 0.15s;
+      letter-spacing: 0.02em;
+    }
+
+    .mat-btn:hover { opacity: 0.75; transform: translateY(-1px); }
+
+    .btn-slides {
+      color: #FF9A5C;
+      border-color: rgba(255,154,92,0.3);
+      background: rgba(255,154,92,0.08);
+    }
+
+    .btn-tp {
+      color: #67D4FF;
+      border-color: rgba(103,212,255,0.3);
+      background: rgba(103,212,255,0.08);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      padding: 1.8rem 2rem;
+      max-width: 1120px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    footer a {
+      color: var(--signal);
+      text-decoration: none;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; }
+      header { padding: 1.8rem 1.2rem 1.5rem; }
+      main   { padding: 1.8rem 1.2rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <div class="header-inner">
+    <div class="course-pill">CET · 523RA018 · 2025–2026</div>
+    <h1><em>UC00652</em> — Otimizar e Implementar Circuitos Lógicos</h1>
+    <div class="header-meta">
+      <span>Formador: Belmiro Simões Luís</span>
+      <span>Escola Sicó</span>
+      <span>Logisim Evolution · Breadboard · Chips TTL 74xx</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span>Progresso da UC</span>
+        <span><strong>4</strong> / 10 aulas concluídas</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main>
+
+  <!-- ── AULAS REALIZADAS ── -->
+  <div class="section-label">Aulas Realizadas</div>
+  <div class="cards">
+
+    <!-- AULA 1 -->
+    <div class="card done">
+      <div class="card-top">
+        <div class="aula-num">Aula 1</div>
+        <span class="status-badge badge-done">✓ Concluída</span>
+      </div>
+      <div class="card-title">MUX, DEMUX e Codificadores</div>
+      <div class="obj-box">
+        Compreender a função de multiplexadores e demultiplexadores. Implementar circuitos com MUX 4:1 e 8:1 no Logisim. Analisar codificadores e decodificadores BCD→7 segmentos.
+      </div>
+      <ul class="topics">
+        <li>MUX 4:1 e 8:1 — seleção de canal por bits de controlo</li>
+        <li>DEMUX — distribuição de 1 entrada para N saídas</li>
+        <li>Codificador de prioridade</li>
+        <li>Decodificador BCD → display 7 segmentos</li>
+        <li>Implementação e simulação no Logisim Evolution</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">MUX</span>
+        <span class="tag">DEMUX</span>
+        <span class="tag">Codificador</span>
+        <span class="tag">Decodificador</span>
+        <span class="tag">7 Segmentos</span>
+        <span class="tag">Logisim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="#">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="#">📄 TP01</a>
+      </div>
+    </div>
+
+    <!-- AULA 2 -->
+    <div class="card done">
+      <div class="card-top">
+        <div class="aula-num">Aula 2</div>
+        <span class="status-badge badge-done">✓ Concluída</span>
+      </div>
+      <div class="card-title">Somadores e Comparadores TTL</div>
+      <div class="obj-box">
+        Ler e interpretar datasheets de chips TTL. Implementar o 74283 em cascata para 8 bits com soma e subtração. Implementar o 7485 em cascata para comparação de 8 bits.
+      </div>
+      <ul class="topics">
+        <li>Como ler um datasheet — Pin Config, Function Table, Logic Diagram</li>
+        <li>74283 — somador de 4 bits DIP-16, pinagem e cascata</li>
+        <li>Somador/Subtrator 8 bits — sinal M via XOR + C0</li>
+        <li>7485 — comparador 4 bits, entradas de cascata (IA&gt;B, IA=B, IA&lt;B)</li>
+        <li>Comparador 8 bits — cascata Chip LOW → Chip HIGH</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">74283</span>
+        <span class="tag">7485</span>
+        <span class="tag">Cascata</span>
+        <span class="tag">Datasheet</span>
+        <span class="tag">Complemento p/2</span>
+        <span class="tag">Carry</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="#">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="#">📄 TP02</a>
+      </div>
+    </div>
+
+    <!-- AULA 3 -->
+    <div class="card done">
+      <div class="card-top">
+        <div class="aula-num">Aula 3</div>
+        <span class="status-badge badge-done">✓ Concluída</span>
+      </div>
+      <div class="card-title">Latches e Flip-Flop D</div>
+      <div class="obj-box">
+        Compreender a diferença entre circuitos combinatórios e sequenciais. Construir e testar um Latch SR com NAND. Implementar o Latch D e o FF-D com clock no Logisim. Interpretar cronogramas temporais.
+      </div>
+      <ul class="topics">
+        <li>Combinatório vs. Sequencial — memória em circuitos digitais</li>
+        <li>Latch SR NAND — entradas ativas a LOW, estado proibido (S̄=R̄=0)</li>
+        <li>Latch D — inversor elimina o estado proibido, transparência com EN</li>
+        <li>Flip-Flop D — disparo por flanco ↑, sincronização precisa</li>
+        <li>Cronogramas — Q ao longo de 8 instantes de clock</li>
+        <li>Reset assíncrono (CLR) e dois FFs em série (pipeline)</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">Latch SR</span>
+        <span class="tag">Latch D</span>
+        <span class="tag">Flip-Flop D</span>
+        <span class="tag">Estado Proibido</span>
+        <span class="tag">Clock</span>
+        <span class="tag">Cronograma</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula3/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="#">📄 TP03</a>
+      </div>
+    </div>
+
+    <!-- AULA 4 -->
+    <div class="card done">
+      <div class="card-top">
+        <div class="aula-num">Aula 4</div>
+        <span class="status-badge badge-done">✓ Concluída</span>
+      </div>
+      <div class="card-title">Flip-Flops JK e T · Contadores</div>
+      <div class="obj-box">
+        Compreender os FF-JK e FF-T como extensões do FF-D. Construir contadores assíncronos e síncronos. Utilizar o 74193 para contagem Up/Down com carga paralela no Logisim.
+      </div>
+      <ul class="topics">
+        <li>FF-JK — elimina o estado proibido do SR, modo toggle</li>
+        <li>FF-T — divisor de frequência por 2</li>
+        <li>Assíncrono vs. síncrono — ripple counter e atraso de propagação</li>
+        <li>Contador de 4 bits com 74193 — Up/Down/Load</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">FF-JK</span>
+        <span class="tag">FF-T</span>
+        <span class="tag">Contador</span>
+        <span class="tag">74193</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula4/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="#">📄 TP04</a>
+      </div>
+    </div>
+
+  </div><!-- /cards realizadas -->
+
+  <!-- ── A SEGUIR ── -->
+  <div class="section-label">A Seguir</div>
+  <div class="cards">
+
+    <!-- AULA 5 -->
+    <div class="card current">
+      <div class="card-top">
+        <div class="aula-num">Aula 5</div>
+        <span class="status-badge badge-current">Atual</span>
+      </div>
+      <div class="card-title">Registos e Memórias</div>
+      <div class="obj-box">
+        Construir registos SIPO, PISO e PIPO com cadeias de FF-D no Logisim. Implementar uma ROM como Look-Up Table para substituir lógica combinatória. Interpretar cronogramas de deslocamento.
+      </div>
+      <ul class="topics">
+        <li>SIPO — entrada série, saída paralela (cadeia de FF-D)</li>
+        <li>PISO — carga paralela + deslocamento série (controlo LOAD)</li>
+        <li>PIPO — registo paralelo síncrono, base de buffers e pipelines</li>
+        <li>ROM como LUT — BCD→7 segmentos sem portas lógicas</li>
+        <li>Cronograma SIPO — 4 flancos para carregar 4 bits</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">SIPO</span>
+        <span class="tag">PISO</span>
+        <span class="tag">PIPO</span>
+        <span class="tag">ROM LUT</span>
+        <span class="tag">Shift Register</span>
+        <span class="tag">Logisim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="TP5/UC00652_Aula05_Registos_Memorias.pptx">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="TP5/UC00652_TP05_Registos_Memorias.docx">📄 TP05</a>
+      </div>
+    </div>
+
+    <!-- AULAS 6–8 -->
+    <div class="card upcoming">
+      <div class="card-top">
+        <div class="aula-num">Aulas 6–8</div>
+        <span class="status-badge badge-next">Em preparação</span>
+      </div>
+      <div class="card-title">Máquinas de Estados (FSM)</div>
+      <ul class="topics">
+        <li>Moore vs. Mealy — diferenças e aplicações</li>
+        <li>Diagrama de estados → tabela de transições → circuito</li>
+        <li>Implementação com FF-D e FF-JK no Logisim</li>
+        <li>Projeto completo de FSM — controlador de semáforo</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">FSM</span>
+        <span class="tag">Moore</span>
+        <span class="tag">Mealy</span>
+        <span class="tag">Logisim</span>
+      </div>
+    </div>
+
+    <!-- AULAS 9–10 -->
+    <div class="card upcoming">
+      <div class="card-top">
+        <div class="aula-num">Aulas 9–10</div>
+        <span class="status-badge badge-next">Em preparação</span>
+      </div>
+      <div class="card-title">Breadboard com Chips 74xx</div>
+      <ul class="topics">
+        <li>Montagem física em breadboard — alimentação 5 V</li>
+        <li>Pull-up, LEDs indicadores, debounce de botões</li>
+        <li>Chips 74xx — montagem e teste real em bancada</li>
+        <li>Verificação com multímetro e osciloscópio</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">Breadboard</span>
+        <span class="tag">74xx</span>
+        <span class="tag">Hardware</span>
+        <span class="tag">Osciloscópio</span>
+      </div>
+    </div>
+
+  </div><!-- /cards a seguir -->
+
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div>UC00652 · CET Técnico/a Especialista em Automação, Robótica e Controlo Industrial</div>
+  <div>Escola Sicó · Formador: Belmiro Simões Luís · 2025–2026</div>
+</footer>
+
+</body>
+</html>
