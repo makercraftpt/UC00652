@@ -157,7 +157,7 @@
       background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
       height: 100%;
       border-radius: 6px;
-      width: 30%;
+      width: 40%;
       position: relative;
     }
 
@@ -432,7 +432,7 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>3</strong> / 10 aulas concluídas</span>
+        <span><strong>4</strong> / 10 aulas concluídas</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill"></div>
@@ -511,7 +511,7 @@
     </div>
 
     <!-- AULA 3 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 3</div>
         <span class="status-badge badge-done">✓ Concluída</span>
@@ -542,19 +542,16 @@
       </div>
     </div>
 
-  </div><!-- /cards realizadas -->
-
-  <!-- ── A SEGUIR ── -->
-  <div class="section-label">A Seguir</div>
-  <div class="cards">
-
     <!-- AULA 4 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 4</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">✓ Concluída</span>
       </div>
       <div class="card-title">Flip-Flops JK e T · Contadores</div>
+      <div class="obj-box">
+        Compreender os FF-JK e FF-T como extensões do FF-D. Construir contadores assíncronos e síncronos. Utilizar o 74193 para contagem Up/Down com carga paralela no Logisim.
+      </div>
       <ul class="topics">
         <li>FF-JK — elimina o estado proibido do SR, modo toggle</li>
         <li>FF-T — divisor de frequência por 2</li>
@@ -573,24 +570,40 @@
       </div>
     </div>
 
+  </div><!-- /cards realizadas -->
+
+  <!-- ── A SEGUIR ── -->
+  <div class="section-label">A Seguir</div>
+  <div class="cards">
+
     <!-- AULA 5 -->
-    <div class="card upcoming">
+    <div class="card current">
       <div class="card-top">
         <div class="aula-num">Aula 5</div>
-        <span class="status-badge badge-next">Em preparação</span>
+        <span class="status-badge badge-current">Atual</span>
       </div>
-      <div class="card-title">Registos · ROM e RAM</div>
+      <div class="card-title">Registos e Memórias</div>
+      <div class="obj-box">
+        Construir registos SIPO, PISO e PIPO com cadeias de FF-D no Logisim. Implementar uma ROM como Look-Up Table para substituir lógica combinatória. Interpretar cronogramas de deslocamento.
+      </div>
       <ul class="topics">
-        <li>Registo de deslocamento — SIPO, PISO, SISO, PIPO</li>
-        <li>Aplicação: serialização e deserialização de dados</li>
-        <li>Memória ROM — tabela de verdade em hardware</li>
-        <li>Memória RAM — escrita, leitura e endereçamento</li>
+        <li>SIPO — entrada série, saída paralela (cadeia de FF-D)</li>
+        <li>PISO — carga paralela + deslocamento série (controlo LOAD)</li>
+        <li>PIPO — registo paralelo síncrono, base de buffers e pipelines</li>
+        <li>ROM como LUT — BCD→7 segmentos sem portas lógicas</li>
+        <li>Cronograma SIPO — 4 flancos para carregar 4 bits</li>
       </ul>
       <div class="tags">
-        <span class="tag">Registos</span>
+        <span class="tag">SIPO</span>
+        <span class="tag">PISO</span>
+        <span class="tag">PIPO</span>
+        <span class="tag">ROM LUT</span>
         <span class="tag">Shift Register</span>
-        <span class="tag">ROM</span>
-        <span class="tag">RAM</span>
+        <span class="tag">Logisim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula5/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="#">📄 TP05</a>
       </div>
     </div>
 
