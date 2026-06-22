@@ -333,18 +333,18 @@
   </div>
   <div class="slide-body two-col">
     <div class="col">
-      <div class="concept-row">
-        <div class="concept-box cbox-stay">
+      <div class="concept-row" style="flex:1;">
+        <div class="concept-box cbox-stay" style="display:flex; flex-direction:column;">
           <div class="concept-head">🔁 Self-loop — fico</div>
-          <div class="concept-body">
+          <div class="concept-body" style="flex:1;">
             <div>O estímulo <strong style="color:#D8B4FE;">não foi satisfeito</strong></div>
             <div>→ próximo estado = estado atual</div>
             <div style="margin-top:.4rem; font-size:.75rem; color:var(--muted);">Exemplo:<br>Estou no PISO_0.<br>Ninguém carregou BTN_1.<br>→ Fico no PISO_0.</div>
           </div>
         </div>
-        <div class="concept-box cbox-move">
+        <div class="concept-box cbox-move" style="display:flex; flex-direction:column;">
           <div class="concept-head">➡️ Mudança — movo</div>
-          <div class="concept-body">
+          <div class="concept-body" style="flex:1;">
             <div>O estímulo <strong style="color:#67E8F9;">foi satisfeito</strong></div>
             <div>→ próximo estado = outro estado</div>
             <div style="margin-top:.4rem; font-size:.75rem; color:var(--muted);">Exemplo:<br>Estou no PISO_0.<br>BTN_1 = 1 (chamada).<br>→ Passo a SUBINDO.</div>
@@ -355,8 +355,8 @@
       <ul class="pts">
         <li>Para cada estado e para <strong style="color:var(--signal);">cada combinação de entradas</strong>, DEVE existir exactamente 1 próximo estado</li>
         <li>Nenhuma combinação pode ficar "por definir" — a máquina tem sempre de saber o que fazer</li>
-        <li class="amber">O self-loop <em>não é</em> uma exceção ou um caso especial — é uma transição legítima como qualquer outra</li>
-        <li class="green">Nos estados de movimento (SUBINDO, DESCENDO), o self-loop significa "ainda não chegaste — aguarda o SENSOR"</li>
+        <li class="amber">O self-loop <em>não é</em> uma exceção — é uma transição legítima como qualquer outra</li>
+        <li class="green">Nos estados de movimento, o self-loop significa "ainda não chegaste — aguarda o SENSOR"</li>
       </ul>
       <div class="note red">
         ⚠️ Se uma linha da tabela ficar em branco, o circuito terá comportamento imprevisível — pode ir para um estado "lixo".
