@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anexo — Elevador com Porta · UC00652</title>
+  <style>
+    :root {
+      --navy:   #0A1F3C;
+      --navy2:  #0F2A4A;
+      --navy3:  #071629;
+      --signal: #00C5FF;
+      --green:  #22C55E;
+      --amber:  #D68910;
+      --red:    #EF4444;
+      --purple: #A855F7;
+      --text:   #E8EDF5;
+      --muted:  #7A96B4;
+      --border: #1A3A5C;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--navy); color: var(--text); line-height: 1.7; }
+
+    /* ─── HEADER ─── */
+    header {
+      background: var(--navy3);
+      border-bottom: 2px solid var(--signal);
+      padding: 2rem 2rem 1.5rem;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .hinner { max-width: 960px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .back-link { color: var(--muted); text-decoration: none; font-size: .82rem; display: flex; align-items: center; gap: .4rem; transition: color .15s; }
+    .back-link:hover { color: var(--signal); }
+    .header-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .header-sub { font-size: .78rem; color: var(--signal); }
+    .pill { background: rgba(0,197,255,.12); border: 1px solid rgba(0,197,255,.3); color: var(--signal); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .7rem; border-radius: 20px; white-space: nowrap; }
+
+    /* ─── MAIN ─── */
+    main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+    /* ─── SECTION LABELS ─── */
+    .sec-label { font-size: .68rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--signal); display: flex; align-items: center; gap: .8rem; margin: 2.8rem 0 1.2rem; }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+    /* ─── TYPOGRAPHY ─── */
+    h2 { font-size: 1.35rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--signal); margin: 1.6rem 0 .6rem; }
+    p { font-size: .93rem; color: var(--text); margin-bottom: .7rem; }
+    code { font-family: 'Consolas', monospace; font-size: .85em; background: rgba(0,197,255,.08); border: 1px solid rgba(0,197,255,.18); padding: .1rem .4rem; border-radius: 4px; color: var(--signal); }
+    pre { background: #040E1C; border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.3rem; overflow-x: auto; margin: .8rem 0 1.2rem; }
+    pre code { background: none; border: none; padding: 0; font-size: .83rem; color: var(--text); line-height: 1.7; }
+
+    /* ─── NOTE BOX ─── */
+    .note { border-left: 3px solid var(--signal); background: rgba(0,197,255,.05); padding: .65rem 1rem; border-radius: 0 6px 6px 0; font-size: .88rem; color: var(--text); margin: .8rem 0; line-height: 1.55; }
+    .note.amber { border-left-color: var(--amber); background: rgba(214,137,16,.06); }
+    .note.green { border-left-color: var(--green); background: rgba(34,197,94,.06); }
+    .note.purple { border-left-color: var(--purple); background: rgba(168,85,247,.06); }
+
+    /* ─── TABLES ─── */
+    .tbl-wrap { overflow-x: auto; margin: .8rem 0 1.4rem; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    thead th { background: rgba(0,197,255,.12); color: var(--signal); font-weight: 700; padding: .5rem .75rem; text-align: center; font-size: .76rem; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+    tbody td { padding: .42rem .75rem; border-bottom: 1px solid rgba(26,58,92,.5); text-align: center; color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr.sl td { background: rgba(168,85,247,.07); color: #D8B4FE; }
+    tbody tr.mv td { background: rgba(0,197,255,.06); color: #67E8F9; }
+    tbody tr.g td { background: rgba(34,197,94,.06); }
+    tbody tr.a td { background: rgba(214,137,16,.06); }
+    td.left, th.left { text-align: left; }
+    td.mono { font-family: 'Consolas', monospace; font-size: .88rem; font-weight: 700; }
+    td.muted { color: var(--muted); font-style: italic; }
+
+    /* ─── CARDS GRID ─── */
+    .cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; margin: .8rem 0 1.4rem; }
+    @media (max-width: 640px) { .cards2 { grid-template-columns: 1fr; } }
+    .card { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: .85rem 1rem; }
+    .card-title { font-size: .78rem; font-weight: 800; color: var(--signal); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .45rem; }
+    .card p { font-size: .82rem; margin: 0; color: var(--muted); }
+
+    /* ─── COMPARE TABLE ─── */
+    .cmp td.better { color: #86EFAC; font-weight: 700; }
+
+    /* ─── STEP LIST ─── */
+    .steps { list-style: none; display: flex; flex-direction: column; gap: .45rem; margin: .5rem 0 1rem; }
+    .steps li { display: flex; gap: .75rem; align-items: flex-start; background: var(--navy2); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .8rem; font-size: .88rem; }
+    .steps li .n { background: rgba(0,197,255,.15); color: var(--signal); font-size: .7rem; font-weight: 800; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .05rem; }
+    .steps li strong { color: #fff; }
+
+    /* ─── STATE BOXES ─── */
+    .states-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin: .8rem 0 1.2rem; }
+    @media (max-width: 640px) { .states-grid { grid-template-columns: 1fr 1fr; } }
+    .sbox { border-radius: 8px; padding: .7rem .9rem; border: 1px solid var(--border); }
+    .sbox.g  { border-color: rgba(34,197,94,.4);   background: rgba(34,197,94,.06); }
+    .sbox.b  { border-color: rgba(0,197,255,.35);  background: rgba(0,197,255,.06); }
+    .sbox.a  { border-color: rgba(214,137,16,.4);  background: rgba(214,137,16,.06); }
+    .sbox.p  { border-color: rgba(168,85,247,.4);  background: rgba(168,85,247,.06); }
+    .sbox .code { font-family: monospace; font-size: .75rem; color: var(--muted); margin-bottom: .2rem; }
+    .sbox .name { font-size: .88rem; font-weight: 700; margin-bottom: .25rem; }
+    .sbox.g .name  { color: #86EFAC; }
+    .sbox.b .name  { color: #67E8F9; }
+    .sbox.a .name  { color: #FCD34D; }
+    .sbox.p .name  { color: #D8B4FE; }
+    .sbox .out { font-size: .75rem; color: var(--muted); font-family: monospace; }
+
+    /* ─── HERO BANNER ─── */
+    .hero { background: linear-gradient(135deg, #040E1C 0%, #0A1F3C 60%, #0D2040 100%); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 2.5rem; }
+    .hero .tag { display: inline-block; background: rgba(168,85,247,.15); border: 1px solid rgba(168,85,247,.3); color: #D8B4FE; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .7rem; border-radius: 20px; margin-bottom: 1rem; }
+    .hero h1 { font-size: clamp(1.3rem, 3vw, 1.9rem); font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: .5rem; }
+    .hero h1 em { font-style: normal; color: var(--signal); }
+    .hero .lead { font-size: .9rem; color: var(--muted); max-width: 680px; }
+    .delta-row { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.2rem; }
+    .delta { background: rgba(0,197,255,.1); border: 1px solid rgba(0,197,255,.25); border-radius: 6px; padding: .3rem .75rem; font-size: .78rem; color: var(--signal); }
+    .delta strong { color: #fff; }
+
+    /* ─── TOC ─── */
+    .toc { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.3rem; margin-bottom: 2rem; }
+    .toc-title { font-size: .72rem; font-weight: 800; color: var(--signal); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .6rem; }
+    .toc ol { padding-left: 1.1rem; }
+    .toc li { font-size: .86rem; color: var(--muted); margin-bottom: .2rem; }
+    .toc a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .toc a:hover { color: var(--signal); }
+
+    /* ─── FOOTER ─── */
+    footer { border-top: 1px solid var(--border); padding: 1.2rem 2rem; text-align: center; font-size: .78rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="hinner">
+    <div>
+      <a class="back-link" href="index.html">← Aula 7</a>
+      <div class="header-title">Elevador FSM — Extensão com Abertura de Porta</div>
+      <div class="header-sub">UC00652 · Aula 7 · Anexo</div>
+    </div>
+    <div class="pill">Extensão</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="tag">Anexo — Aula 7</div>
+    <h1>Elevador com <em>Abertura de Porta</em></h1>
+    <p class="lead">O modelo base tem 4 estados e a porta "abre instantaneamente". Na realidade existe um motor de porta e um <strong>sensor de fim de curso</strong> (FC_PORTA) que confirma quando a porta está completamente aberta. Este anexo estende o FSM para incluir esse comportamento.</p>
+    <div class="delta-row">
+      <div class="delta"><strong>+2</strong> estados</div>
+      <div class="delta"><strong>+1</strong> bit (3 FF-D)</div>
+      <div class="delta"><strong>+1</strong> entrada: FC_PORTA</div>
+      <div class="delta"><strong>+1</strong> saída: MP (Motor Porta)</div>
+      <div class="delta"><strong>+2</strong> self-loops</div>
+      <div class="delta">12 linhas na tabela</div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Índice</div>
+    <ol>
+      <li><a href="#motivacao">Motivação</a></li>
+      <li><a href="#estados">Os 6 estados</a></li>
+      <li><a href="#entradas">Entradas e saídas</a></li>
+      <li><a href="#tabela">Tabela de transições</a></li>
+      <li><a href="#equacoes">Equações Moore e próximo estado</a></li>
+      <li><a href="#sequencia">Sequência de funcionamento</a></li>
+      <li><a href="#logisim">Implementação no LogiSim</a></li>
+      <li><a href="#comparacao">Comparação com o modelo base</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. MOTIVAÇÃO -->
+  <div class="sec-label" id="motivacao">Motivação</div>
+  <p>No modelo da Aula 7, ao chegar ao andar o elevador passa diretamente para o estado PISO_X (parado, porta aberta). Na realidade:</p>
+  <ul style="list-style:none; display:flex; flex-direction:column; gap:.35rem; margin:.5rem 0 1rem;">
+    <li style="font-size:.9rem; color:var(--text);">▸&nbsp; A porta tem um <strong>motor próprio</strong> que precisa de ser ativado</li>
+    <li style="font-size:.9rem; color:var(--text);">▸&nbsp; A porta demora algum tempo a abrir (vários ciclos de clock)</li>
+    <li style="font-size:.9rem; color:var(--text);">▸&nbsp; Um <strong>fim de curso</strong> (micro-switch ou sensor ótico) deteta quando a porta está completamente aberta</li>
+    <li style="font-size:.9rem; color:var(--text);">▸&nbsp; Só depois do fim de curso é que o sistema passa para o estado de espera</li>
+  </ul>
+  <div class="note amber">
+    Este é um exemplo perfeito de como uma FSM cresce de forma controlada: acrescentamos 2 estados intermédios (um por andar) e mantemos exatamente a mesma metodologia — diagrama → tabela → equações.
+  </div>
+
+  <!-- 2. ESTADOS -->
+  <div class="sec-label" id="estados">Os 6 estados</div>
+  <p>Passamos de 2 bits (4 estados) para <strong>3 bits (8 combinações possíveis)</strong>. Usamos 6; os estados <code>110</code> e <code>111</code> são inválidos.</p>
+
+  <div class="states-grid">
+    <div class="sbox g">
+      <div class="code">Q₂Q₁Q₀ = 000</div>
+      <div class="name">S0 — PISO_0</div>
+      <div class="out">P=1 · MS=0 · MD=0 · MP=0</div>
+    </div>
+    <div class="sbox b">
+      <div class="code">Q₂Q₁Q₀ = 001</div>
+      <div class="name">S1 — SUBINDO ↑</div>
+      <div class="out">P=0 · MS=1 · MD=0 · MP=0</div>
+    </div>
+    <div class="sbox g">
+      <div class="code">Q₂Q₁Q₀ = 010</div>
+      <div class="name">S2 — PISO_1</div>
+      <div class="out">P=1 · MS=0 · MD=0 · MP=0</div>
+    </div>
+    <div class="sbox a">
+      <div class="code">Q₂Q₁Q₀ = 011</div>
+      <div class="name">S3 — DESCENDO ↓</div>
+      <div class="out">P=0 · MS=0 · MD=1 · MP=0</div>
+    </div>
+    <div class="sbox p">
+      <div class="code">Q₂Q₁Q₀ = 100</div>
+      <div class="name">S4 — PORTA_ABRE_0 ✨</div>
+      <div class="out">P=0 · MS=0 · MD=0 · MP=1</div>
+    </div>
+    <div class="sbox p">
+      <div class="code">Q₂Q₁Q₀ = 101</div>
+      <div class="name">S5 — PORTA_ABRE_1 ✨</div>
+      <div class="out">P=0 · MS=0 · MD=0 · MP=1</div>
+    </div>
+  </div>
+  <div class="note purple">
+    S4 e S5 são os dois estados novos. Em ambos, o Motor da Porta (MP=1) está ativo e o elevador aguarda o fim de curso. A única diferença é o andar onde estão — e por isso têm saídas diferentes para o próximo estado.
+  </div>
+
+  <!-- 3. ENTRADAS E SAÍDAS -->
+  <div class="sec-label" id="entradas">Entradas e Saídas</div>
+
+  <div class="cards2">
+    <div class="card">
+      <div class="card-title">Entradas</div>
+      <div class="tbl-wrap" style="margin:.5rem 0 0;">
+        <table>
+          <thead><tr><th class="left">Sinal</th><th class="left">Descrição</th></tr></thead>
+          <tbody>
+            <tr><td class="left"><code>BTN_1</code></td><td class="left">Botão para 1.º andar</td></tr>
+            <tr><td class="left"><code>BTN_0</code></td><td class="left">Botão para R/C</td></tr>
+            <tr><td class="left"><code>SENSOR</code></td><td class="left">Sensor de chegada ao destino</td></tr>
+            <tr style="background:rgba(168,85,247,.08)"><td class="left"><code style="color:#D8B4FE;">FC_PORTA</code></td><td class="left" style="color:#D8B4FE;">Fim de curso da porta ✨</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Saídas Moore</div>
+      <div class="tbl-wrap" style="margin:.5rem 0 0;">
+        <table>
+          <thead><tr><th class="left">Sinal</th><th class="left">Ativo em</th></tr></thead>
+          <tbody>
+            <tr><td class="left"><code>P</code> — Porta aberta</td><td class="left">S0 e S2 → <code>Q₂'·Q₀'</code></td></tr>
+            <tr><td class="left"><code>MS</code> — Motor Sobe</td><td class="left">S1 → <code>Q₂'·Q₁'·Q₀</code></td></tr>
+            <tr><td class="left"><code>MD</code> — Motor Desce</td><td class="left">S3 → <code>Q₂'·Q₁·Q₀</code></td></tr>
+            <tr style="background:rgba(168,85,247,.08)"><td class="left"><code style="color:#D8B4FE;">MP</code> — Motor Porta ✨</td><td class="left" style="color:#D8B4FE;">S4 e S5 → <code style="color:#D8B4FE;">Q₂·Q₁'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Equações Moore (leitura direta)</h3>
+  <pre><code>P  = Q₂' · Q₀'        // porta aberta: S0=000 e S2=010 (Q₂=0, Q₀=0)
+MS = Q₂' · Q₁' · Q₀   // motor sobe: apenas S1=001
+MD = Q₂' · Q₁  · Q₀   // motor desce: apenas S3=011
+MP = Q₂  · Q₁'         // motor porta: S4=100 e S5=101 (Q₂=1, Q₁=0)</code></pre>
+
+  <!-- 4. TABELA -->
+  <div class="sec-label" id="tabela">Tabela de Transições Completa</div>
+  <p>Entradas relevantes por estado: <code>BTN_1</code> (S0), <code>SENSOR</code> (S1 e S3), <code>BTN_0</code> (S2), <code>FC_PORTA</code> (S4 e S5).</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="left">Estado atual</th>
+          <th>Q₂Q₁Q₀</th>
+          <th>Condição</th>
+          <th class="left">Próximo estado</th>
+          <th>Q₂'Q₁'Q₀'</th>
+          <th>P</th><th>MS</th><th>MD</th><th>MP</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sl">
+          <td class="left" style="color:#86EFAC; font-weight:700;">S0  PISO_0</td>
+          <td class="mono">000</td>
+          <td class="muted">BTN_1 = 0</td>
+          <td class="left">S0  PISO_0</td>
+          <td class="mono">000</td>
+          <td>1</td><td>0</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr>
+          <td class="left" style="color:#86EFAC; font-weight:700;">S0  PISO_0</td>
+          <td class="mono">000</td>
+          <td style="color:var(--amber);">BTN_1 = 1</td>
+          <td class="left">S1  SUBINDO</td>
+          <td class="mono">001</td>
+          <td>1</td><td>0</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">➡️ sobe</td>
+        </tr>
+        <tr class="sl">
+          <td class="left" style="color:#67E8F9; font-weight:700;">S1  SUBINDO</td>
+          <td class="mono">001</td>
+          <td class="muted">SENSOR = 0</td>
+          <td class="left">S1  SUBINDO</td>
+          <td class="mono">001</td>
+          <td>0</td><td>1</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr>
+          <td class="left" style="color:#67E8F9; font-weight:700;">S1  SUBINDO</td>
+          <td class="mono">001</td>
+          <td style="color:var(--green);">SENSOR = 1</td>
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S5  PORTA_ABRE_1 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">101</td>
+          <td>0</td><td>1</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">➡️ chegada</td>
+        </tr>
+        <tr class="sl">
+          <td class="left" style="color:#86EFAC; font-weight:700;">S2  PISO_1</td>
+          <td class="mono">010</td>
+          <td class="muted">BTN_0 = 0</td>
+          <td class="left">S2  PISO_1</td>
+          <td class="mono">010</td>
+          <td>1</td><td>0</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr>
+          <td class="left" style="color:#86EFAC; font-weight:700;">S2  PISO_1</td>
+          <td class="mono">010</td>
+          <td style="color:var(--amber);">BTN_0 = 1</td>
+          <td class="left">S3  DESCENDO</td>
+          <td class="mono">011</td>
+          <td>1</td><td>0</td><td>0</td><td>0</td>
+          <td style="font-size:.78rem;">➡️ desce</td>
+        </tr>
+        <tr class="sl">
+          <td class="left" style="color:#FCD34D; font-weight:700;">S3  DESCENDO</td>
+          <td class="mono">011</td>
+          <td class="muted">SENSOR = 0</td>
+          <td class="left">S3  DESCENDO</td>
+          <td class="mono">011</td>
+          <td>0</td><td>0</td><td>1</td><td>0</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr>
+          <td class="left" style="color:#FCD34D; font-weight:700;">S3  DESCENDO</td>
+          <td class="mono">011</td>
+          <td style="color:var(--green);">SENSOR = 1</td>
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S4  PORTA_ABRE_0 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">100</td>
+          <td>0</td><td>0</td><td>1</td><td>0</td>
+          <td style="font-size:.78rem;">➡️ chegada</td>
+        </tr>
+        <tr class="sl" style="background:rgba(168,85,247,.10);">
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S4  PORTA_ABRE_0 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">100</td>
+          <td class="muted">FC_PORTA = 0</td>
+          <td class="left">S4  PORTA_ABRE_0</td>
+          <td class="mono" style="color:#D8B4FE;">100</td>
+          <td>0</td><td>0</td><td>0</td><td style="color:#D8B4FE; font-weight:700;">1</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr style="background:rgba(168,85,247,.05);">
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S4  PORTA_ABRE_0 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">100</td>
+          <td style="color:var(--green);">FC_PORTA = 1</td>
+          <td class="left">S0  PISO_0</td>
+          <td class="mono">000</td>
+          <td>0</td><td>0</td><td>0</td><td style="color:#D8B4FE; font-weight:700;">1</td>
+          <td style="font-size:.78rem;">➡️ porta aberta</td>
+        </tr>
+        <tr class="sl" style="background:rgba(168,85,247,.10);">
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S5  PORTA_ABRE_1 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">101</td>
+          <td class="muted">FC_PORTA = 0</td>
+          <td class="left">S5  PORTA_ABRE_1</td>
+          <td class="mono" style="color:#D8B4FE;">101</td>
+          <td>0</td><td>0</td><td>0</td><td style="color:#D8B4FE; font-weight:700;">1</td>
+          <td style="font-size:.78rem;">🔁 loop</td>
+        </tr>
+        <tr style="background:rgba(168,85,247,.05);">
+          <td class="left" style="color:#D8B4FE; font-weight:700;">S5  PORTA_ABRE_1 ✨</td>
+          <td class="mono" style="color:#D8B4FE;">101</td>
+          <td style="color:var(--green);">FC_PORTA = 1</td>
+          <td class="left">S2  PISO_1</td>
+          <td class="mono">010</td>
+          <td>0</td><td>0</td><td>0</td><td style="color:#D8B4FE; font-weight:700;">1</td>
+          <td style="font-size:.78rem;">➡️ porta aberta</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note purple"><strong>6 self-loops</strong> (um por estado) + <strong>6 mudanças</strong> = 12 linhas. Nenhuma combinação por definir.</div>
+
+  <!-- 5. EQUAÇÕES PRÓXIMO ESTADO -->
+  <div class="sec-label" id="equacoes">Equações do Próximo Estado</div>
+  <p>Lê-se diretamente das colunas Q₂'Q₁'Q₀' da tabela:</p>
+
+  <h3>D₂ — bit mais significativo</h3>
+  <p>D₂ = 1 quando o próximo estado pertence a {S4, S5} (Q₂'=1):</p>
+  <pre><code>S1 → S5: Q₂=0, Q₁=0, Q₀=1, SENSOR=1   → Q₂'·Q₁'·Q₀·SENSOR
+S3 → S4: Q₂=0, Q₁=1, Q₀=1, SENSOR=1   → Q₂'·Q₁·Q₀·SENSOR
+S4 → S4: Q₂=1, Q₁=0, Q₀=0, FC'         → Q₂·Q₁'·Q₀'·FC_PORTA'
+S5 → S5: Q₂=1, Q₁=0, Q₀=1, FC'         → Q₂·Q₁'·Q₀·FC_PORTA'
+
+Simplificado:
+D₂ = Q₂'·Q₀·SENSOR  +  Q₂·Q₁'·FC_PORTA'</code></pre>
+
+  <h3>D₁ — bit intermédio</h3>
+  <p>D₁ = 1 quando o próximo estado tem Q₁'=1 (S2=010, S3=011):</p>
+  <pre><code>S2 → S2: Q₂=0, Q₁=1, Q₀=0, BTN_0=0   → Q₂'·Q₁·Q₀'·BTN_0'
+S2 → S3: Q₂=0, Q₁=1, Q₀=0, BTN_0=1   → Q₂'·Q₁·Q₀'·BTN_0
+S3 → S3: Q₂=0, Q₁=1, Q₀=1, SENSOR=0  → Q₂'·Q₁·Q₀·SENSOR'
+S5 → S2: Q₂=1, Q₁=0, Q₀=1, FC=1      → Q₂·Q₁'·Q₀·FC_PORTA
+
+Simplificado:
+D₁ = Q₂'·Q₁·SENSOR'  +  Q₂·Q₁'·Q₀·FC_PORTA</code></pre>
+
+  <div class="note">As linhas S2→S2 e S2→S3 juntas cobrem BTN_0=0 e BTN_0=1 com Q₂'·Q₁·Q₀' — simplificam para <code>Q₂'·Q₁·Q₀'</code> sem depender de BTN_0. Resultado: D₁ = Q₂'·Q₁·(Q₀'+SENSOR') + Q₂·Q₁'·Q₀·FC_PORTA.</div>
+
+  <h3>D₀ — bit menos significativo</h3>
+  <p>D₀ = 1 quando o próximo estado tem Q₀'=1 (S1=001, S3=011, S5=101):</p>
+  <pre><code>S0 → S1: Q₂=0, Q₁=0, Q₀=0, BTN_1=1   → Q₂'·Q₁'·Q₀'·BTN_1
+S1 → S1: Q₂=0, Q₁=0, Q₀=1, SENSOR=0  → Q₂'·Q₁'·Q₀·SENSOR'
+S3 → S3: Q₂=0, Q₁=1, Q₀=1, SENSOR=0  → Q₂'·Q₁·Q₀·SENSOR'
+S4 → S4: Q₂=1, Q₁=0, Q₀=0, FC'        → Q₂·Q₁'·Q₀'·FC_PORTA'
+S5 → S5: Q₂=1, Q₁=0, Q₀=1, FC'        → Q₂·Q₁'·Q₀·FC_PORTA'
+
+Simplificado:
+D₀ = Q₂'·Q₁'·Q₀'·BTN_1 + Q₂'·Q₀·SENSOR' + Q₂·Q₁'·FC_PORTA'</code></pre>
+
+  <!-- 6. SEQUÊNCIA -->
+  <div class="sec-label" id="sequencia">Sequência de Funcionamento Completa</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Passo</th><th>BTN_1</th><th>BTN_0</th><th>SENSOR</th><th>FC_PORTA</th><th class="left">Estado</th><th>MP</th><th>P</th></tr>
+      </thead>
+      <tbody>
+        <tr class="g"><td>Início</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left">S0 PISO_0</td><td>0</td><td>1</td></tr>
+        <tr class="sl"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left">S0 🔁</td><td>0</td><td>1</td></tr>
+        <tr><td>BTN_1↑</td><td>1</td><td>0</td><td>0</td><td>0</td><td class="left">S1 SUBINDO</td><td>0</td><td>0</td></tr>
+        <tr class="sl"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left">S1 🔁</td><td>0</td><td>0</td></tr>
+        <tr><td>SENSOR↑</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="left" style="color:#D8B4FE; font-weight:700;">S5 PORTA_ABRE_1 ✨</td><td style="color:#D8B4FE; font-weight:700;">1</td><td>0</td></tr>
+        <tr class="sl" style="background:rgba(168,85,247,.08)"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left" style="color:#D8B4FE;">S5 🔁 porta a abrir…</td><td style="color:#D8B4FE;">1</td><td>0</td></tr>
+        <tr><td>FC_PORTA↑</td><td>0</td><td>0</td><td>0</td><td>1</td><td class="left">S2 PISO_1</td><td>0</td><td>1</td></tr>
+        <tr class="sl"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left">S2 🔁</td><td>0</td><td>1</td></tr>
+        <tr><td>BTN_0↑</td><td>0</td><td>1</td><td>0</td><td>0</td><td class="left">S3 DESCENDO</td><td>0</td><td>0</td></tr>
+        <tr class="sl"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left">S3 🔁</td><td>0</td><td>0</td></tr>
+        <tr><td>SENSOR↑</td><td>0</td><td>0</td><td>1</td><td>0</td><td class="left" style="color:#D8B4FE; font-weight:700;">S4 PORTA_ABRE_0 ✨</td><td style="color:#D8B4FE; font-weight:700;">1</td><td>0</td></tr>
+        <tr class="sl" style="background:rgba(168,85,247,.08)"><td>CLK×n</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="left" style="color:#D8B4FE;">S4 🔁 porta a abrir…</td><td style="color:#D8B4FE;">1</td><td>0</td></tr>
+        <tr class="g"><td>FC_PORTA↑</td><td>0</td><td>0</td><td>0</td><td>1</td><td class="left">S0 PISO_0 ✓</td><td>0</td><td>1</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note green">Nas linhas 🔁, o estado mantém-se durante vários ciclos de clock — visível no LogiSim como LED imóvel. MP=1 (LED amarelo) fica aceso durante toda a abertura da porta.</div>
+
+  <!-- 7. LOGISIM -->
+  <div class="sec-label" id="logisim">Implementação no LogiSim</div>
+
+  <ul class="steps">
+    <li><div class="n">1</div><div><strong>3 FF-D + Clock</strong> — Memory → D Flip-Flop (×3). Superior = Q₂, médio = Q₁, inferior = Q₀</div></li>
+    <li><div class="n">2</div><div><strong>4 entradas</strong> — Wiring → Pin (×4): BTN_1, BTN_0, SENSOR, FC_PORTA</div></li>
+    <li><div class="n">3</div><div><strong>Lógica D₂</strong> — <code>Q₂'·Q₀·SENSOR + Q₂·Q₁'·FC_PORTA'</code></div></li>
+    <li><div class="n">4</div><div><strong>Lógica D₁</strong> — <code>Q₂'·Q₁·SENSOR' + Q₂·Q₁'·Q₀·FC_PORTA</code></div></li>
+    <li><div class="n">5</div><div><strong>Lógica D₀</strong> — <code>Q₂'·Q₁'·Q₀'·BTN_1 + Q₂'·Q₀·SENSOR' + Q₂·Q₁'·FC_PORTA'</code></div></li>
+    <li><div class="n">6</div><div><strong>Saídas Moore → LEDs</strong> — P=NOT(Q₂)·NOT(Q₀) · MS=NOT(Q₂)·NOT(Q₁)·Q₀ · MD=NOT(Q₂)·Q₁·Q₀ · MP=Q₂·NOT(Q₁)</div></li>
+    <li><div class="n">7</div><div><strong>Guardar</strong> como <code>elevador_porta.circ</code> e testar a sequência completa — verificar que MP acende durante a abertura de porta</div></li>
+  </ul>
+
+  <!-- 8. COMPARAÇÃO -->
+  <div class="sec-label" id="comparacao">Comparação com o Modelo Base</div>
+
+  <div class="tbl-wrap">
+    <table class="cmp">
+      <thead><tr><th class="left">Aspeto</th><th>Modelo base (Aula 7)</th><th>Modelo com porta (Anexo)</th></tr></thead>
+      <tbody>
+        <tr><td class="left">Número de estados</td><td>4</td><td class="better">6</td></tr>
+        <tr><td class="left">Bits / FF-D</td><td>2 bits — 2 FF-D</td><td class="better">3 bits — 3 FF-D</td></tr>
+        <tr><td class="left">Entradas</td><td>BTN_1, BTN_0, SENSOR</td><td class="better">+ FC_PORTA</td></tr>
+        <tr><td class="left">Saídas Moore</td><td>P, MS, MD</td><td class="better">+ MP (Motor Porta)</td></tr>
+        <tr><td class="left">Self-loops</td><td>4</td><td class="better">6</td></tr>
+        <tr><td class="left">Linhas na tabela</td><td>8</td><td class="better">12</td></tr>
+        <tr><td class="left">Realismo</td><td>Simplificado (pedagógico)</td><td class="better">Mais próximo do real</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">A metodologia é exatamente a mesma nos dois modelos: diagrama → tabela → equações → circuito. Crescer de 4 para 6 estados não muda o processo — só aumenta o número de linhas.</div>
+
+</main>
+
+<footer>
+  UC00652 · Otimizar e Implementar Circuitos Lógicos · Escola Sicó · 2025–2026
+</footer>
+
+</body>
+</html>
