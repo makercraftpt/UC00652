@@ -432,10 +432,10 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>5</strong> / 10 aulas concluídas</span>
+        <span><strong>6</strong> / 10 aulas concluídas</span>
       </div>
       <div class="progress-track">
-        <div class="progress-fill" style="width:50%"></div>
+        <div class="progress-fill" style="width:60%"></div>
       </div>
     </div>
   </div>
@@ -603,10 +603,10 @@
     </div>
 
     <!-- AULA 6 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 6</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">Concluída</span>
       </div>
       <div class="card-title">FSM — Fundamentos e Semáforo Moore</div>
       <div class="obj-box">
@@ -631,22 +631,52 @@
       </div>
     </div>
 
-    <!-- AULAS 7–8 -->
-    <div class="card upcoming">
+    <!-- AULA 7 -->
+    <div class="card current">
       <div class="card-top">
-        <div class="aula-num">Aulas 7–8</div>
-        <span class="status-badge badge-next">Em preparação</span>
+        <div class="aula-num">Aula 7</div>
+        <span class="status-badge badge-current">Atual</span>
       </div>
-      <div class="card-title">FSM — Entradas complexas e síntese</div>
+      <div class="card-title">FSM — Tabela de Transições a Fundo · Elevador</div>
+      <div class="obj-box">
+        O elevador como FSM com 4 estados. Construção passo a passo da tabela de transições: self-loops, estímulos externos (botões e sensores), derivação de equações D₁D₀ e implementação com 2 FF-D no LogiSim.
+      </div>
       <ul class="topics">
-        <li>Aula 7: FSM com múltiplas entradas + introdução suave a Mealy</li>
-        <li>Aula 8: Implementar FSM com flip-flops D — equações e síntese</li>
-        <li>Projeto aplicado: controlador de porta automática ou braço robótico</li>
+        <li>Self-loop — a permanência como transição válida</li>
+        <li>Construir a tabela linha a linha sem deixar combinações por definir</li>
+        <li>Estímulos: BTN (botões) vs. SENSOR (chegada ao andar)</li>
+        <li>Da tabela às equações D₁, D₀ e saídas Moore (P, MS, MD)</li>
+        <li>Implementação e teste do elevador no LogiSim Evolution</li>
       </ul>
       <div class="tags">
         <span class="tag">FSM</span>
-        <span class="tag">Moore</span>
+        <span class="tag">Self-loop</span>
+        <span class="tag">Elevador</span>
+        <span class="tag">LogiSim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula7/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="aula7/UC00652_TP07_FSM_Elevador.docx">📄 TP07</a>
+      </div>
+    </div>
+
+    <!-- AULA 8 -->
+    <div class="card upcoming">
+      <div class="card-top">
+        <div class="aula-num">Aula 8</div>
+        <span class="status-badge badge-next">Em preparação</span>
+      </div>
+      <div class="card-title">FSM — Mealy e Síntese Avançada</div>
+      <ul class="topics">
+        <li>Modelo de Mealy: saídas dependem do estado e das entradas</li>
+        <li>Comparação Moore vs. Mealy em exemplos práticos</li>
+        <li>Síntese completa: da especificação ao circuito físico</li>
+        <li>Projeto aplicado: controlador de porta automática</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">FSM</span>
         <span class="tag">Mealy</span>
+        <span class="tag">Moore</span>
         <span class="tag">LogiSim</span>
       </div>
     </div>
