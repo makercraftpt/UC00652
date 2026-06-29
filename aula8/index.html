@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 8 — FSM Semáforo · Método MUX · UC00652</title>
+  <style>
+    :root {
+      --navy:   #0A1F3C;
+      --navy2:  #0F2A4A;
+      --navy3:  #071629;
+      --signal: #00C5FF;
+      --green:  #22C55E;
+      --amber:  #D68910;
+      --red:    #EF4444;
+      --cyan:   #06B6D4;
+      --purple: #A855F7;
+      --text:   #E8EDF5;
+      --muted:  #7A96B4;
+      --border: #1A3A5C;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { width:100%; height:100%; background:#000; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+    #deck { width:100vw; height:100vh; position:relative; }
+    .slide {
+      position:absolute; inset:0; background:var(--navy);
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none; transition:opacity 0.35s ease;
+    }
+    .slide.active { opacity:1; pointer-events:auto; }
+    .slide::before {
+      content:''; position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(0,197,255,0.03) 1px,transparent 1px);
+      background-size:50px 50px; pointer-events:none;
+    }
+    .slide-header {
+      background:var(--navy3); border-bottom:2px solid var(--signal);
+      padding:0.65rem 2.2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      position:relative; z-index:1; flex-shrink:0;
+    }
+    .slide-header h2 { font-size:1.2rem; font-weight:700; color:#fff; }
+    .slide-header .sub { font-size:0.72rem; color:var(--signal); font-style:italic; }
+    .slide-num { font-size:0.7rem; color:var(--muted); font-weight:600; letter-spacing:.05em; }
+    .slide-body { flex:1; display:flex; position:relative; z-index:1; overflow:hidden; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+    .wide-left { grid-template-columns:3fr 2fr; }
+    .col { padding:1rem 1.5rem; display:flex; flex-direction:column; gap:0.65rem; }
+    .col + .col { border-left:1px solid var(--border); }
+    .full { padding:1rem 2rem; width:100%; display:flex; flex-direction:column; gap:0.75rem; }
+
+    /* TITLE */
+    #s1 { justify-content:center; align-items:center; text-align:center; }
+    #s1::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 40%, rgba(0,197,255,0.08) 0%, transparent 70%); }
+    #s1 .tc { position:relative; z-index:2; }
+    .pill { display:inline-block; background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal); font-size:0.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; padding:.35rem 1rem; border-radius:20px; margin-bottom:1.5rem; }
+    #s1 h1 { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; color:#fff; line-height:1.15; margin-bottom:.5rem; }
+    #s1 h1 em { font-style:normal; color:var(--signal); }
+    #s1 .tagline { font-size:.95rem; color:var(--muted); margin-top:.8rem; }
+    #s1 .tagline span { color:rgba(0,197,255,0.6); margin:0 .4rem; }
+    #s1 .course-id { margin-top:2.5rem; font-size:.78rem; color:var(--muted); }
+
+    /* OBJ GRID */
+    .obj-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; width:100%; }
+    .obj-item { background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; display:flex; gap:.7rem; align-items:flex-start; }
+    .obj-icon { font-size:1.25rem; flex-shrink:0; line-height:1; margin-top:.1rem; }
+    .obj-title { font-size:.84rem; font-weight:700; color:#fff; margin-bottom:.18rem; }
+    .obj-desc  { font-size:.73rem; color:var(--muted); line-height:1.4; }
+
+    h3 { font-size:.7rem; font-weight:800; color:var(--signal); text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--border); padding-bottom:.3rem; }
+    .note { font-size:.78rem; color:var(--muted); background:rgba(0,197,255,0.05); border-left:3px solid rgba(0,197,255,0.35); padding:.45rem .85rem; border-radius:0 5px 5px 0; line-height:1.5; }
+    .note.green  { border-left-color:var(--green);  background:rgba(34,197,94,0.06);   color:#86EFAC; }
+    .note.amber  { border-left-color:var(--amber);  background:rgba(214,137,16,0.06);  color:#E8C070; }
+    .note.purple { border-left-color:var(--purple); background:rgba(168,85,247,0.06);  color:#D8B4FE; }
+    .note.red    { border-left-color:var(--red);    background:rgba(239,68,68,0.06);   color:#FCA5A5; }
+    ul.pts { list-style:none; display:flex; flex-direction:column; gap:.38rem; }
+    ul.pts li { font-size:.82rem; color:var(--text); display:flex; gap:.6rem; align-items:flex-start; line-height:1.45; }
+    ul.pts li::before { content:'▸'; color:var(--signal); flex-shrink:0; font-size:.72rem; margin-top:.08rem; }
+    ul.pts li.green::before { color:var(--green); }
+    ul.pts li.amber::before { color:var(--amber); }
+    ul.pts li.purple::before { color:var(--purple); }
+
+    .svg-wrap { background:var(--navy2); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:center; align-items:center; flex:1; padding:.4rem; }
+
+    /* TABLE */
+    table.tt { width:100%; border-collapse:collapse; font-size:.77rem; }
+    table.tt th { background:rgba(0,197,255,0.12); color:var(--signal); font-weight:700; padding:.35rem .5rem; text-align:center; border:1px solid var(--border); font-size:.69rem; letter-spacing:.04em; }
+    table.tt td { padding:.3rem .5rem; text-align:center; border:1px solid var(--border); color:var(--text); }
+    table.tt tr.sl td { background:rgba(168,85,247,0.08); color:#D8B4FE; }
+    table.tt tr.mv td { background:rgba(34,197,94,0.08);  color:#86EFAC; }
+    table.tt td.mono { font-family:monospace; font-size:.82rem; font-weight:700; }
+
+    /* EQ BOX */
+    .eq-box { background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:.65rem 1rem; font-family:monospace; font-size:.8rem; line-height:2; color:var(--text); }
+    .eq-box .em { color:var(--signal); font-weight:700; }
+    .eq-box .cm { color:var(--muted); font-size:.68rem; }
+    .eq-box .hi { color:#86EFAC; font-weight:700; }
+    .eq-box .hi2 { color:#D8B4FE; font-weight:700; }
+
+    /* MUX VISUAL */
+    .mux-row { display:flex; gap:.8rem; align-items:stretch; }
+    .mux-block { background:rgba(0,197,255,0.08); border:2px solid rgba(0,197,255,0.35); border-radius:8px; padding:.6rem 1rem; display:flex; flex-direction:column; gap:.3rem; font-family:monospace; font-size:.78rem; flex:1; }
+    .mux-label { font-size:.65rem; font-weight:800; color:var(--signal); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.2rem; }
+    .mux-in  { color:var(--muted); }
+    .mux-sel { color:#86EFAC; font-weight:700; }
+    .mux-out { color:#fff; font-weight:700; border-top:1px solid var(--border); padding-top:.3rem; margin-top:.2rem; }
+
+    /* STEPS */
+    .step-list { display:flex; flex-direction:column; gap:.42rem; }
+    .step-item { display:flex; gap:.8rem; align-items:flex-start; background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.5rem .8rem; }
+    .step-n { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.72rem; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .step-title { font-size:.82rem; font-weight:700; color:#fff; margin-bottom:.1rem; }
+    .step-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+    .step-code  { font-family:monospace; font-size:.68rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:4px; padding:.12rem .4rem; color:var(--signal); display:inline-block; margin-top:.18rem; }
+
+    /* CHIP CARDS */
+    .chip-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .chip-card { background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.55rem .8rem; }
+    .chip-name { font-family:monospace; font-size:.82rem; font-weight:800; color:var(--signal); margin-bottom:.22rem; }
+    .chip-role { font-size:.72rem; color:var(--muted); line-height:1.35; }
+
+    /* ROAD MAP */
+    .road { display:flex; flex-direction:column; gap:.4rem; }
+    .road-item { display:flex; gap:.9rem; align-items:flex-start; padding:.55rem .9rem; border-radius:7px; border:1px solid var(--border); }
+    .road-item.current { border-color:var(--signal); background:rgba(0,197,255,0.06); }
+    .road-item.next    { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.04); }
+    .road-item.future  { background:var(--navy2); }
+    .road-badge { font-size:.62rem; font-weight:800; padding:.2rem .5rem; border-radius:4px; flex-shrink:0; margin-top:.12rem; white-space:nowrap; }
+    .road-badge.cur { background:rgba(0,197,255,0.18); color:var(--signal); }
+    .road-badge.nxt { background:rgba(34,197,94,0.18); color:#86EFAC; }
+    .road-badge.fut { background:rgba(255,255,255,0.06); color:var(--muted); }
+    .road-title { font-size:.84rem; font-weight:700; color:#fff; margin-bottom:.1rem; }
+    .road-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+
+    /* EX LIST */
+    .ex-list { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .ex-item { background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.55rem .85rem; display:flex; gap:.7rem; align-items:flex-start; }
+    .ex-num { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.66rem; font-weight:800; padding:.12rem .38rem; border-radius:4px; flex-shrink:0; margin-top:.08rem; }
+    .ex-title { font-size:.8rem; font-weight:700; color:#fff; margin-bottom:.14rem; }
+    .ex-desc  { font-size:.68rem; color:var(--muted); line-height:1.4; }
+
+    /* NAV */
+    #back-btn { position:fixed; top:.75rem; left:1rem; z-index:200; color:var(--muted); font-size:.75rem; text-decoration:none; background:rgba(10,31,60,0.85); border:1px solid var(--border); padding:.3rem .75rem; border-radius:5px; transition:color .15s; }
+    #back-btn:hover { color:var(--signal); }
+    #nav { position:fixed; bottom:1.2rem; right:1.5rem; display:flex; align-items:center; gap:.6rem; z-index:100; }
+    .nav-btn { background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .nav-btn:hover { background:rgba(0,197,255,0.25); }
+    .nav-btn:disabled { opacity:.3; cursor:default; }
+    #slide-counter { font-size:.72rem; color:var(--muted); min-width:40px; text-align:center; font-weight:600; }
+    #dots { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); display:flex; gap:.45rem; z-index:100; }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--border); transition:background .2s,transform .2s; cursor:pointer; }
+    .dot.active { background:var(--signal); transform:scale(1.35); }
+  </style>
+</head>
+<body>
+<a id="back-btn" href="../index.html">← UC00652</a>
+<div id="deck">
+
+<!-- ╔══════════════╗ -->
+<!-- ║  1 — TÍTULO  ║ -->
+<!-- ╚══════════════╝ -->
+<div class="slide active" id="s1">
+  <div class="tc">
+    <div class="pill">UC00652 · Aula 8</div>
+    <h1>FSM Moore — <em>Método MUX</em></h1>
+    <h1 style="font-size:clamp(1rem,2.2vw,1.55rem);color:var(--muted);font-weight:400;margin-top:.4rem;">
+      Semáforo · D = (T̄·Atual) + (T·Próximo) · LogiSim → TinkerCAD → Bancada
+    </h1>
+    <p class="tagline">
+      MUX 2:1 <span>▸</span> estado atual <span>▸</span> condição <span>▸</span> estado seguinte
+    </p>
+    <p class="course-id">523RA018 · Escola Sicó · 2025–2026</p>
+  </div>
+</div>
+
+<!-- ╔═══════════════╗ -->
+<!-- ║  2 — OBJETIVOS ║ -->
+<!-- ╚═══════════════╝ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <div><h2>Objetivos da Aula 8</h2><div class="sub">Uma técnica nova · o mesmo semáforo · três aulas de caminho</div></div>
+    <div class="slide-num">2 / 9</div>
+  </div>
+  <div class="slide-body full" style="justify-content:center;align-items:center;">
+    <div class="obj-grid" style="max-width:900px;">
+      <div class="obj-item">
+        <div class="obj-icon">🔀</div>
+        <div>
+          <div class="obj-title">Método MUX — a fórmula base</div>
+          <div class="obj-desc">Perceber que D = (T̄·Atual) + (T·Próximo) é um MUX 2:1 com o sinal de controlo como linha de seleção</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🚦</div>
+        <div>
+          <div class="obj-title">Semáforo — já conhecem os estados</div>
+          <div class="obj-desc">Usar o semáforo de Aula 6 como veículo — o FSM já é familiar, o foco é a técnica MUX de implementação</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">💻</div>
+        <div>
+          <div class="obj-title">Construir no LogiSim</div>
+          <div class="obj-desc">Ligar dois MUX 2:1, dois FF-D e três LEDs — o semáforo a funcionar até ao fim da aula</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🔘</div>
+        <div>
+          <div class="obj-title">BTN — interrupção de ciclo</div>
+          <div class="obj-desc">Adicionar um botão que chama o vermelho mais cedo quando ativado em VERDE — sem novos estados, só lógica extra</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  3 — REVISÃO: FSM   ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <div><h2>Revisão — O Semáforo como FSM</h2><div class="sub">3 estados · 2 bits · ciclo automático controlado por TIMER</div></div>
+    <div class="slide-num">3 / 9</div>
+  </div>
+  <div class="slide-body two-col wide-left">
+    <div class="col">
+      <h3>Diagrama de estados</h3>
+      <div class="svg-wrap" style="min-height:260px;">
+        <svg viewBox="0 0 500 290" width="100%" height="100%">
+          <defs>
+            <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00C5FF"/></marker>
+            <marker id="asl" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#A855F7"/></marker>
+          </defs>
+
+          <!-- S0 VERDE -->
+          <circle cx="110" cy="145" r="55" fill="#071629" stroke="#22C55E" stroke-width="2.5"/>
+          <circle cx="110" cy="115" r="10" fill="#22C55E" opacity="0.9"/>
+          <circle cx="110" cy="145" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <circle cx="110" cy="175" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <text x="110" y="200" text-anchor="middle" font-size="11" font-weight="800" fill="#86EFAC">VERDE</text>
+          <text x="110" y="212" text-anchor="middle" font-size="8.5" fill="#7A96B4">Q₁Q₀ = 00</text>
+
+          <!-- S1 AMARELO -->
+          <circle cx="270" cy="60" r="55" fill="#071629" stroke="#D68910" stroke-width="2.5"/>
+          <circle cx="270" cy="30" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <circle cx="270" cy="60" r="10" fill="#D68910" opacity="0.9"/>
+          <circle cx="270" cy="90" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <text x="270" y="118" text-anchor="middle" font-size="11" font-weight="800" fill="#FCD34D">AMARELO</text>
+          <text x="270" y="130" text-anchor="middle" font-size="8.5" fill="#7A96B4">Q₁Q₀ = 01</text>
+
+          <!-- S2 VERMELHO -->
+          <circle cx="270" cy="230" r="55" fill="#071629" stroke="#EF4444" stroke-width="2.5"/>
+          <circle cx="270" cy="200" r="10" fill="#EF4444" opacity="0.9"/>
+          <circle cx="270" cy="230" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <circle cx="270" cy="260" r="10" fill="#1A3A5C" stroke="#333" stroke-width="1"/>
+          <text x="270" y="282" text-anchor="middle" font-size="11" font-weight="800" fill="#FCA5A5">VERMELHO</text>
+
+          <!-- hidden for spacing -->
+          <text x="270" y="294" text-anchor="middle" font-size="8.5" fill="#7A96B4">Q₁Q₀ = 10</text>
+
+          <!-- S0 → S1: TIMER=1 -->
+          <path d="M 155 110 Q 200 65 218 68" stroke="#00C5FF" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+          <text x="178" y="75" font-size="9.5" fill="#00C5FF" font-weight="700">TIMER=1</text>
+
+          <!-- S1 → S2: TIMER=1 -->
+          <path d="M 270 117" stroke="#00C5FF" stroke-width="1.8" fill="none"/>
+          <line x1="270" y1="117" x2="270" y2="173" stroke="#00C5FF" stroke-width="1.8" marker-end="url(#a)"/>
+          <text x="280" y="150" font-size="9.5" fill="#00C5FF" font-weight="700">TIMER=1</text>
+
+          <!-- S2 → S0: TIMER=1 -->
+          <path d="M 220 215 Q 160 220 158 193" stroke="#00C5FF" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+          <text x="148" y="210" font-size="9.5" fill="#00C5FF" font-weight="700">TIMER=1</text>
+
+          <!-- Self-loops -->
+          <path d="M 70 98 C 40 60 60 30 95 98" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#asl)"/>
+          <text x="38" y="62" font-size="8.5" fill="#A855F7">T=0</text>
+
+          <path d="M 310 22 C 360 0 375 45 320 55" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#asl)"/>
+          <text x="360" y="22" font-size="8.5" fill="#A855F7">T=0</text>
+
+          <path d="M 320 265 C 370 280 370 230 323 222" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#asl)"/>
+          <text x="355" y="260" font-size="8.5" fill="#A855F7">T=0</text>
+
+          <!-- saídas -->
+          <text x="440" y="80" font-size="9" fill="#86EFAC" font-weight="700">Saídas Moore</text>
+          <text x="440" y="96" font-size="9" fill="#86EFAC">VERDE  = Q₁'·Q₀'</text>
+          <text x="440" y="112" font-size="9" fill="#FCD34D">AMARELO = Q₁'·Q₀</text>
+          <text x="440" y="128" font-size="9" fill="#FCA5A5">VERM. = Q₁·Q₀'</text>
+        </svg>
+      </div>
+    </div>
+    <div class="col">
+      <h3>O problema a resolver</h3>
+      <ul class="pts">
+        <li>O semáforo muda de estado quando <strong>TIMER=1</strong></li>
+        <li>Quando <strong>TIMER=0</strong>, fica no estado atual (self-loop)</li>
+        <li>Precisamos de calcular <strong>D₁ e D₀</strong> — as entradas dos FF-D</li>
+        <li class="amber">Na Aula 6 usámos equações derivadas à mão</li>
+        <li class="green">Hoje usamos um <strong>MUX 2:1</strong> — mais direto e mais visual</li>
+      </ul>
+      <h3 style="margin-top:.3rem;">A questão chave</h3>
+      <div class="note amber" style="font-size:.78rem;">
+        "Qual o valor de D no próximo ciclo de clock?"<br><br>
+        <strong>Se TIMER=0:</strong> D = Q (fica igual — self-loop)<br>
+        <strong>Se TIMER=1:</strong> D = Q' (vai para o próximo estado)
+      </div>
+      <div class="note green" style="font-size:.78rem; margin-top:.3rem;">
+        Esta escolha entre <em>dois valores</em> consoante um <em>sinal de controlo</em> é exatamente a função de um <strong>MUX 2:1</strong>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═══════════════════╗ -->
+<!-- ║  4 — FÓRMULA MUX  ║ -->
+<!-- ╚═══════════════════╝ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div><h2>A Fórmula MUX</h2><div class="sub">D = (T̄·Atual) + (T·Próximo) — fica ou avança?</div></div>
+    <div class="slide-num">4 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col" style="justify-content:center;">
+      <h3>MUX 2:1 como seletor de estado</h3>
+      <div class="svg-wrap" style="min-height:220px;">
+        <svg viewBox="0 0 340 200" width="100%" height="100%">
+          <!-- MUX body -->
+          <polygon points="120,30 220,50 220,150 120,170" fill="#0F2A4A" stroke="#00C5FF" stroke-width="2"/>
+          <text x="170" y="105" text-anchor="middle" font-size="13" font-weight="800" fill="#00C5FF">MUX</text>
+          <text x="170" y="120" text-anchor="middle" font-size="10" fill="#7A96B4">2:1</text>
+
+          <!-- Input A0: Q (atual) -->
+          <line x1="20" y1="72" x2="120" y2="72" stroke="#A855F7" stroke-width="2"/>
+          <text x="14" y="76" text-anchor="end" font-size="10" fill="#D8B4FE" font-weight="700">Q</text>
+          <text x="22" y="66" font-size="8" fill="#A855F7">A₀ (S=0)</text>
+          <text x="22" y="84" font-size="7.5" fill="#7A96B4">estado atual</text>
+
+          <!-- Input A1: Q_next -->
+          <line x1="20" y1="128" x2="120" y2="128" stroke="#22C55E" stroke-width="2"/>
+          <text x="14" y="132" text-anchor="end" font-size="10" fill="#86EFAC" font-weight="700">Q_next</text>
+          <text x="22" y="122" font-size="8" fill="#22C55E">A₁ (S=1)</text>
+          <text x="22" y="140" font-size="7.5" fill="#7A96B4">estado seguinte</text>
+
+          <!-- Select: TIMER -->
+          <line x1="170" y1="170" x2="170" y2="195" stroke="#00C5FF" stroke-width="2"/>
+          <text x="170" y="195" text-anchor="middle" font-size="10" fill="#00C5FF" font-weight="700">TIMER</text>
+          <text x="232" y="185" font-size="8" fill="#7A96B4">linha de seleção</text>
+
+          <!-- Output: D -->
+          <line x1="220" y1="100" x2="310" y2="100" stroke="#fff" stroke-width="2.5"/>
+          <text x="318" y="104" font-size="12" font-weight="800" fill="#fff">D</text>
+          <text x="232" y="92" font-size="8" fill="#7A96B4">→ FF-D</text>
+
+          <!-- Labels inside MUX -->
+          <text x="130" y="78" font-size="8" fill="#A855F7">0 →</text>
+          <text x="130" y="134" font-size="8" fill="#22C55E">1 →</text>
+
+          <!-- Annotation boxes -->
+          <rect x="0" y="155" width="340" height="40" rx="4" fill="rgba(0,197,255,0.06)" stroke="rgba(0,197,255,0.2)" stroke-width="1"/>
+          <text x="170" y="170" text-anchor="middle" font-size="9" fill="#00C5FF" font-weight="700">TIMER=0 → D=Q (fica)</text>
+          <text x="170" y="186" text-anchor="middle" font-size="9" fill="#86EFAC" font-weight="700">TIMER=1 → D=Q_next (avança)</text>
+        </svg>
+      </div>
+      <div class="eq-box" style="font-size:.85rem; text-align:center; padding:.8rem;">
+        <div><span class="em">D</span> = (<span class="hi2">T̄</span> · <span style="color:#D8B4FE">Atual</span>) + (<span class="hi2">T</span> · <span class="hi">Próximo</span>)</div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Calcular Q_next para o semáforo</h3>
+      <div class="note" style="font-size:.78rem;">
+        Q_next é o estado para onde vamos <em>se o TIMER disparar</em>. Calculamos uma vez, a partir da tabela, e ligamos como entrada A₁ do MUX.
+      </div>
+      <table class="tt" style="margin-top:.2rem;">
+        <thead>
+          <tr><th>Estado atual</th><th>Q₁Q₀</th><th>→ Próximo</th><th>D₁_next</th><th>D₀_next</th></tr>
+        </thead>
+        <tbody>
+          <tr class="mv"><td>VERDE</td><td class="mono">00</td><td>AMARELO 01</td><td>0</td><td>1</td></tr>
+          <tr class="mv"><td>AMARELO</td><td class="mono">01</td><td>VERMELHO 10</td><td>1</td><td>0</td></tr>
+          <tr class="mv"><td>VERMELHO</td><td class="mono">10</td><td>VERDE 00</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <h3>Leitura das colunas D_next</h3>
+      <div class="eq-box">
+        <div><span class="em">D₁_next</span> = Q₀  <span class="cm">// 0→0, 1→1, 0→0 — é exatamente Q₀!</span></div>
+        <div><span class="em">D₀_next</span> = NOR(Q₁,Q₀)  <span class="cm">// 1 só quando Q=00</span></div>
+      </div>
+      <h3>Equações finais dos MUX</h3>
+      <div class="eq-box">
+        <div><span class="em">D₁</span> = T̄·Q₁ + T·<span class="hi">Q₀</span></div>
+        <div><span class="em">D₀</span> = T̄·Q₀ + T·<span class="hi">NOR(Q₁,Q₀)</span></div>
+      </div>
+      <div class="note purple" style="font-size:.74rem; margin-top:.3rem;">
+        Sem Karnaugh, sem álgebra de Boole longa. O MUX <em>encapsula</em> a escolha fica/avança — as equações emergem direto da tabela.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔════════════════════════╗ -->
+<!-- ║  5 — CIRCUITO LOGISIM  ║ -->
+<!-- ╚════════════════════════╝ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <div><h2>Circuito no LogiSim</h2><div class="sub">2 MUX · 2 FF-D · 3 LEDs · construir passo a passo</div></div>
+    <div class="slide-num">5 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Diagrama de ligações</h3>
+      <div class="svg-wrap" style="min-height:300px;">
+        <svg viewBox="0 0 420 320" width="100%" height="100%">
+          <!-- TIMER input -->
+          <rect x="5" y="145" width="55" height="24" rx="4" fill="#0F2A4A" stroke="#00C5FF" stroke-width="1.5"/>
+          <text x="33" y="161" text-anchor="middle" font-size="9.5" fill="#00C5FF" font-weight="700">TIMER</text>
+          <line x1="60" y1="157" x2="160" y2="157" stroke="#00C5FF" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+          <!-- NOT TIMER -->
+          <polygon points="100,148 120,157 100,166" fill="#0F2A4A" stroke="#00C5FF" stroke-width="1.2"/>
+          <circle cx="122" cy="157" r="3" fill="none" stroke="#00C5FF" stroke-width="1.2"/>
+
+          <!-- Q1, Q0 labels (outputs of FF-D, fed back) -->
+          <text x="5" y="80" font-size="9" fill="#A855F7" font-weight="700">Q₁</text>
+          <text x="5" y="250" font-size="9" fill="#A855F7" font-weight="700">Q₀</text>
+
+          <!-- MUX for D1 -->
+          <polygon points="160,52 230,68 230,138 160,154" fill="#071629" stroke="#06B6D4" stroke-width="2"/>
+          <text x="195" y="100" text-anchor="middle" font-size="10" font-weight="800" fill="#06B6D4">MUX</text>
+          <text x="195" y="113" text-anchor="middle" font-size="8" fill="#7A96B4">D₁</text>
+          <!-- A0=Q1 -->
+          <line x1="20" y1="80" x2="160" y2="85" stroke="#A855F7" stroke-width="1.5"/>
+          <text x="90" y="78" font-size="7.5" fill="#A855F7">A₀=Q₁</text>
+          <!-- A1=Q0 -->
+          <line x1="20" y1="250" x2="100" y2="250" stroke="#22C55E" stroke-width="1.5"/>
+          <line x1="100" y1="250" x2="100" y2="135" stroke="#22C55E" stroke-width="1.5"/>
+          <line x1="100" y1="135" x2="160" y2="135" stroke="#22C55E" stroke-width="1.5"/>
+          <text x="60" y="130" font-size="7.5" fill="#22C55E">A₁=Q₀</text>
+          <!-- Select -->
+          <line x1="125" y1="157" x2="195" y2="157" stroke="#00C5FF" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <line x1="195" y1="157" x2="195" y2="154" stroke="#00C5FF" stroke-width="1.2"/>
+          <!-- Output D1 -->
+          <line x1="230" y1="103" x2="270" y2="103" stroke="#fff" stroke-width="2"/>
+
+          <!-- FF-D for Q1 -->
+          <rect x="270" y="80" width="55" height="46" rx="5" fill="#0F2A4A" stroke="#22C55E" stroke-width="1.8"/>
+          <text x="297" y="99" text-anchor="middle" font-size="9" font-weight="800" fill="#22C55E">FF-D</text>
+          <text x="297" y="112" text-anchor="middle" font-size="7.5" fill="#7A96B4">Q₁</text>
+          <!-- Q1 output back -->
+          <line x1="325" y1="103" x2="350" y2="103" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="350" y1="103" x2="350" y2="65" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="350" y1="65" x2="20" y2="65" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="20" y1="65" x2="20" y2="80" stroke="#A855F7" stroke-width="1.5"/>
+
+          <!-- CLK lines to both FF-D -->
+          <line x1="297" y1="126" x2="297" y2="145" stroke="#7A96B4" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <text x="303" y="140" font-size="7" fill="#7A96B4">CLK</text>
+
+          <!-- MUX for D0 -->
+          <polygon points="160,178 230,194 230,264 160,280" fill="#071629" stroke="#06B6D4" stroke-width="2"/>
+          <text x="195" y="226" text-anchor="middle" font-size="10" font-weight="800" fill="#06B6D4">MUX</text>
+          <text x="195" y="239" text-anchor="middle" font-size="8" fill="#7A96B4">D₀</text>
+          <!-- A0=Q0 -->
+          <line x1="20" y1="250" x2="160" y2="240" stroke="#A855F7" stroke-width="1.5"/>
+          <text x="75" y="248" font-size="7.5" fill="#A855F7">A₀=Q₀</text>
+          <!-- A1=NOR -->
+          <rect x="62" y="268" width="50" height="18" rx="3" fill="#0F2A4A" stroke="#D68910" stroke-width="1"/>
+          <text x="87" y="280" text-anchor="middle" font-size="8" fill="#FCD34D">NOR</text>
+          <!-- NOR inputs from Q1 Q0 -->
+          <line x1="20" y1="65" x2="52" y2="65" stroke="#A855F7" stroke-width="1" stroke-dasharray="2,2"/>
+          <line x1="52" y1="65" x2="52" y2="272" stroke="#A855F7" stroke-width="1" stroke-dasharray="2,2"/>
+          <line x1="52" y1="272" x2="62" y2="272" stroke="#A855F7" stroke-width="1"/>
+          <line x1="20" y1="250" x2="55" y2="250" stroke="#A855F7" stroke-width="1" stroke-dasharray="2,2"/>
+          <line x1="55" y1="250" x2="55" y2="280" stroke="#A855F7" stroke-width="1" stroke-dasharray="2,2"/>
+          <line x1="55" y1="280" x2="62" y2="280" stroke="#A855F7" stroke-width="1"/>
+          <!-- NOR → A1 -->
+          <line x1="112" y1="276" x2="140" y2="276" stroke="#22C55E" stroke-width="1.5"/>
+          <line x1="140" y1="276" x2="160" y2="264" stroke="#22C55E" stroke-width="1.5"/>
+          <text x="120" y="270" font-size="7.5" fill="#22C55E">A₁</text>
+          <!-- Select -->
+          <line x1="160" y1="157" x2="155" y2="157" stroke="#00C5FF" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <line x1="155" y1="157" x2="155" y2="283" stroke="#00C5FF" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <line x1="155" y1="283" x2="195" y2="283" stroke="#00C5FF" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <line x1="195" y1="283" x2="195" y2="280" stroke="#00C5FF" stroke-width="1.2"/>
+          <!-- Output D0 -->
+          <line x1="230" y1="229" x2="270" y2="229" stroke="#fff" stroke-width="2"/>
+
+          <!-- FF-D for Q0 -->
+          <rect x="270" y="206" width="55" height="46" rx="5" fill="#0F2A4A" stroke="#22C55E" stroke-width="1.8"/>
+          <text x="297" y="225" text-anchor="middle" font-size="9" font-weight="800" fill="#22C55E">FF-D</text>
+          <text x="297" y="238" text-anchor="middle" font-size="7.5" fill="#7A96B4">Q₀</text>
+          <!-- Q0 output back -->
+          <line x1="325" y1="229" x2="360" y2="229" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="360" y1="229" x2="360" y2="255" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="360" y1="255" x2="20" y2="255" stroke="#A855F7" stroke-width="1.5"/>
+          <line x1="20" y1="255" x2="20" y2="250" stroke="#A855F7" stroke-width="1.5"/>
+
+          <!-- CLK -->
+          <line x1="297" y1="252" x2="297" y2="270" stroke="#7A96B4" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <text x="303" y="266" font-size="7" fill="#7A96B4">CLK</text>
+
+          <!-- LEDs output -->
+          <rect x="375" y="52" width="40" height="18" rx="3" fill="rgba(34,197,94,0.2)" stroke="#22C55E" stroke-width="1"/>
+          <text x="395" y="64" text-anchor="middle" font-size="8.5" fill="#86EFAC">VERDE</text>
+          <rect x="375" y="97" width="40" height="18" rx="3" fill="rgba(214,137,16,0.2)" stroke="#D68910" stroke-width="1"/>
+          <text x="395" y="109" text-anchor="middle" font-size="8.5" fill="#FCD34D">AMAR.</text>
+          <rect x="375" y="142" width="40" height="18" rx="3" fill="rgba(239,68,68,0.2)" stroke="#EF4444" stroke-width="1"/>
+          <text x="395" y="154" text-anchor="middle" font-size="8.5" fill="#FCA5A5">VERM.</text>
+
+          <!-- Saídas (decode simples) -->
+          <text x="340" y="60" font-size="7" fill="#7A96B4">Q₁'Q₀'</text>
+          <text x="340" y="105" font-size="7" fill="#7A96B4">Q₁'Q₀</text>
+          <text x="340" y="150" font-size="7" fill="#7A96B4">Q₁Q₀'</text>
+        </svg>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Construção passo a passo no LogiSim</h3>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n">1</div>
+          <div>
+            <div class="step-title">Colocar os dois FF-D com clock</div>
+            <div class="step-desc">Menu <strong>Memory → D Flip-Flop</strong>. Ligar uma fonte de clock (Wiring → Clock). Verificar que Q muda ao clicar o clock.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">2</div>
+          <div>
+            <div class="step-title">Adicionar o MUX para D₁</div>
+            <div class="step-desc">Menu <strong>Plexers → Multiplexer</strong> com Select Bits=1 (2 entradas). Ligar A₀=Q₁, A₁=Q₀, Sel=TIMER. Saída → D do FF-D Q₁.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">3</div>
+          <div>
+            <div class="step-title">Adicionar o MUX para D₀ + porta NOR</div>
+            <div class="step-desc">Colocar uma porta NOR com entradas Q₁ e Q₀. Ligar ao MUX D₀: A₀=Q₀, A₁=NOR(Q₁,Q₀), Sel=TIMER.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">4</div>
+          <div>
+            <div class="step-title">Decoder das saídas Moore</div>
+            <div class="step-desc">3 portas AND com NOT para VERDE (Q₁'·Q₀'), AMARELO (Q₁'·Q₀), VERMELHO (Q₁·Q₀'). Ligar a 3 LEDs coloridos.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">5</div>
+          <div>
+            <div class="step-title">Testar o ciclo completo</div>
+            <div class="step-desc">Ativar TIMER=1 e clicar o clock 3 vezes → VERDE→AMARELO→VERMELHO→VERDE. Verificar os LEDs a cada passo.</div>
+          </div>
+        </div>
+      </div>
+      <div class="note green" style="font-size:.74rem; margin-top:.3rem;">
+        <strong>Componentes usados:</strong> 2× FF-D · 2× MUX 2:1 · 1× NOR · 2× NOT · 3× AND · 3× LED · 1× Clock · 1× Input (TIMER)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═════════════════════════╗ -->
+<!-- ║  6 — EXTENSÃO: BTN      ║ -->
+<!-- ╚═════════════════════════╝ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div><h2>Extensão — Botão de Peões</h2><div class="sub">Chama o vermelho mais cedo · sem novos estados · só lógica extra</div></div>
+    <div class="slide-num">6 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Comportamento desejado</h3>
+      <ul class="pts">
+        <li>Em <strong>VERDE</strong>: se o peão prime o BTN, avança para AMARELO imediatamente (sem esperar o TIMER)</li>
+        <li>Em <strong>AMARELO</strong> e <strong>VERMELHO</strong>: o BTN é <em>ignorado</em> — só o TIMER conta</li>
+        <li>O número de estados <strong>não muda</strong> — continuamos com 3 estados e 2 FF-D</li>
+        <li class="green">É uma <em>condição de avanço composta</em> — dois sinais que podem causar transição</li>
+      </ul>
+      <h3 style="margin-top:.3rem;">A condição AVANÇA</h3>
+      <div class="eq-box">
+        <div><span class="em">VERDE</span>     = NOR(Q₁, Q₀)  <span class="cm">// já tínhamos!</span></div>
+        <div style="margin-top:.4rem;"><span class="em">BTN_ATIVO</span> = BTN · VERDE  <span class="cm">// filtra BTN só em VERDE</span></div>
+        <div style="margin-top:.4rem;"><span class="em">AVANÇA</span>    = TIMER + BTN_ATIVO</div>
+        <div style="font-size:.72rem; color:var(--muted); margin-top:.4rem;">substituir TIMER por AVANÇA nos dois MUX</div>
+      </div>
+      <div class="note green" style="font-size:.76rem;">
+        <strong>Bónus elegante:</strong> NOR(Q₁,Q₀) já existia no circuito como entrada A₁ do MUX D₀. Reutilizamos esse fio — um AND + um OR e o BTN fica integrado.
+      </div>
+      <h3 style="margin-top:.3rem;">Saídas dos peões (opcional, sem novos estados)</h3>
+      <div class="eq-box">
+        <div><span class="em">LED_PEÃO_VERMELHO</span> = Q₁' + Q₀  <span class="cm">// estados 00 e 01</span></div>
+        <div><span class="em">LED_PEÃO_VERDE</span>    = Q₁ · Q₀' <span class="cm">// estado 10 (VERMELHO carros)</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Diagrama de ligações com BTN</h3>
+      <div class="svg-wrap" style="min-height:240px;">
+        <svg viewBox="0 0 360 260" width="100%" height="100%">
+          <!-- Legend box -->
+          <rect x="5" y="5" width="350" height="250" rx="6" fill="rgba(10,31,60,0.4)" stroke="#1A3A5C" stroke-width="1"/>
+
+          <!-- TIMER -->
+          <rect x="15" y="20" width="52" height="18" rx="3" fill="#0F2A4A" stroke="#00C5FF" stroke-width="1"/>
+          <text x="41" y="32" text-anchor="middle" font-size="8.5" fill="#00C5FF" font-weight="700">TIMER</text>
+          <line x1="67" y1="29" x2="200" y2="29" stroke="#00C5FF" stroke-width="1.5"/>
+
+          <!-- BTN -->
+          <rect x="15" y="50" width="52" height="18" rx="3" fill="#0F2A4A" stroke="#D68910" stroke-width="1"/>
+          <text x="41" y="62" text-anchor="middle" font-size="8.5" fill="#FCD34D" font-weight="700">BTN</text>
+          <line x1="67" y1="59" x2="100" y2="59" stroke="#D68910" stroke-width="1.5"/>
+
+          <!-- AND gate: BTN · VERDE -->
+          <rect x="100" y="50" width="50" height="22" rx="10" fill="#0F2A4A" stroke="#D68910" stroke-width="1.2"/>
+          <text x="125" y="64" text-anchor="middle" font-size="8" fill="#FCD34D" font-weight="700">AND</text>
+          <!-- VERDE (NOR) into AND -->
+          <rect x="15" y="80" width="52" height="18" rx="3" fill="#0F2A4A" stroke="#22C55E" stroke-width="1"/>
+          <text x="41" y="92" text-anchor="middle" font-size="8" fill="#86EFAC">NOR(Q₁,Q₀)</text>
+          <text x="41" y="101" text-anchor="middle" font-size="7" fill="#86EFAC">= VERDE</text>
+          <line x1="67" y1="89" x2="90" y2="89" stroke="#22C55E" stroke-width="1.2"/>
+          <line x1="90" y1="89" x2="90" y2="68" stroke="#22C55E" stroke-width="1.2"/>
+          <line x1="90" y1="68" x2="100" y2="68" stroke="#22C55E" stroke-width="1.2"/>
+
+          <!-- AND output -->
+          <line x1="150" y1="61" x2="165" y2="61" stroke="#D68910" stroke-width="1.2"/>
+
+          <!-- OR gate: TIMER + BTN_ATIVO -->
+          <rect x="165" y="20" width="50" height="50" rx="8" fill="#0F2A4A" stroke="#00C5FF" stroke-width="1.5"/>
+          <text x="190" y="43" text-anchor="middle" font-size="8.5" font-weight="800" fill="#00C5FF">OR</text>
+          <text x="190" y="56" text-anchor="middle" font-size="7.5" fill="#7A96B4">AVANÇA</text>
+
+          <!-- TIMER into OR -->
+          <line x1="67" y1="29" x2="165" y2="35" stroke="#00C5FF" stroke-width="1.2"/>
+          <!-- BTN_ATIVO into OR -->
+          <line x1="165" y1="55" x2="163" y2="61" stroke="#D68910" stroke-width="1.2"/>
+          <line x1="163" y1="61" x2="165" y2="61" stroke="#D68910" stroke-width="1.2"/>
+          <!-- already connecting above -->
+
+          <!-- AVANÇA output to both MUX Sel -->
+          <line x1="215" y1="45" x2="260" y2="45" stroke="#22C55E" stroke-width="2"/>
+          <text x="240" y="40" font-size="8" fill="#22C55E" font-weight="700">AVANÇA</text>
+          <line x1="260" y1="45" x2="260" y2="105" stroke="#22C55E" stroke-width="2"/>
+
+          <!-- MUX D1 -->
+          <polygon points="230,110 290,122 290,172 230,184" fill="#071629" stroke="#06B6D4" stroke-width="1.5"/>
+          <text x="260" y="145" text-anchor="middle" font-size="9" font-weight="800" fill="#06B6D4">MUX D₁</text>
+          <line x1="260" y1="105" x2="260" y2="110" stroke="#22C55E" stroke-width="1.5"/>
+          <line x1="290" y1="147" x2="320" y2="147" stroke="#fff" stroke-width="2"/>
+          <rect x="320" y="135" width="30" height="24" rx="3" fill="#0F2A4A" stroke="#22C55E" stroke-width="1.2"/>
+          <text x="335" y="150" text-anchor="middle" font-size="7.5" fill="#22C55E" font-weight="700">FF-D Q₁</text>
+
+          <!-- MUX D0 -->
+          <polygon points="230,195 290,207 290,247 230,257" fill="#071629" stroke="#06B6D4" stroke-width="1.5"/>
+          <text x="260" y="228" text-anchor="middle" font-size="9" font-weight="800" fill="#06B6D4">MUX D₀</text>
+          <line x1="260" y1="184" x2="260" y2="195" stroke="#22C55E" stroke-width="1.5"/>
+          <line x1="290" y1="227" x2="320" y2="227" stroke="#fff" stroke-width="2"/>
+          <rect x="320" y="215" width="30" height="24" rx="3" fill="#0F2A4A" stroke="#22C55E" stroke-width="1.2"/>
+          <text x="335" y="230" text-anchor="middle" font-size="7.5" fill="#22C55E" font-weight="700">FF-D Q₀</text>
+
+          <!-- Label: NOR already in circuit -->
+          <text x="15" y="135" font-size="7.5" fill="#7A96B4">NOR(Q₁,Q₀) já existe</text>
+          <text x="15" y="146" font-size="7.5" fill="#7A96B4">no circuito base →</text>
+          <text x="15" y="157" font-size="7.5" fill="#86EFAC">reutilizar o mesmo fio</text>
+          <text x="15" y="170" font-size="7.5" fill="#7A96B4">Extra: 1 AND + 1 OR</text>
+        </svg>
+      </div>
+      <div class="note amber" style="font-size:.74rem; margin-top:.3rem;">
+        Em AMARELO e VERMELHO, o BTN_ATIVO é sempre 0 (VERDE=0 filtra o BTN). Portanto AVANÇA = TIMER nesses estados — o comportamento base não muda.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════╗ -->
+<!-- ║  7 — LIGAÇÃO AULA 9      ║ -->
+<!-- ╚══════════════════════════╝ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <div><h2>Para a Semana — TinkerCAD</h2><div class="sub">O mesmo circuito · chips reais · botões · temporizador 555</div></div>
+    <div class="slide-num">7 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Correspondência LogiSim → TinkerCAD</h3>
+      <table class="tt">
+        <thead>
+          <tr><th>Componente LogiSim</th><th>Chip TinkerCAD</th><th>Nota</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>MUX 2:1 (×2)</td><td class="mono">74HC157</td><td>4 MUX 2:1 por chip — 1 chip chega</td></tr>
+          <tr><td>FF-D (×2)</td><td class="mono">74HC74</td><td>2 FF-D por chip — 1 chip chega</td></tr>
+          <tr><td>Porta NOR</td><td class="mono">74HC02</td><td>4× NOR por chip</td></tr>
+          <tr><td>Porta AND</td><td class="mono">74HC08</td><td>4× AND por chip</td></tr>
+          <tr><td>Porta OR</td><td class="mono">74HC32</td><td>4× OR por chip</td></tr>
+          <tr><td>Porta NOT</td><td class="mono">74HC04</td><td>6× NOT por chip</td></tr>
+          <tr><td>Clock</td><td class="mono">NE555</td><td>Astável ~1 Hz</td></tr>
+          <tr><td>TIMER (temporização)</td><td class="mono">74HC4020</td><td>Contador ripple — tap Q₂≈4s, Q₃≈8s</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="font-size:.74rem; margin-top:.3rem;">
+        <strong>74HC157:</strong> pino SELECT (1) = AVANÇA · pinos IA = Q atual · pinos IB = Q_next · pinos Y = D para FF-D
+      </div>
+    </div>
+    <div class="col">
+      <h3>As 3 temporizações com 555 + 74HC4020</h3>
+      <ul class="pts">
+        <li>O <strong>NE555</strong> em astável gera um clock lento (~1 Hz com RC adequados)</li>
+        <li>O <strong>74HC4020</strong> conta esses pulsos — cada saída Qₙ ativa ao 2ⁿ pulso</li>
+        <li class="green"><strong>VERDE</strong> → tap Q₃ (8 pulsos = ~8 s)</li>
+        <li class="amber"><strong>AMARELO</strong> → tap Q₁ (2 pulsos = ~2 s)</li>
+        <li class="purple"><strong>VERMELHO</strong> → tap Q₂ (4 pulsos = ~4 s)</li>
+        <li>O estado atual (Q₁Q₀ dos FF-D) seleciona qual tap está ativo — via portas AND</li>
+        <li>Quando TIMER dispara → reseta o 74HC4020 via CLR → inicia nova contagem</li>
+      </ul>
+      <div class="note purple" style="font-size:.74rem;">
+        <strong>Este "selector de timing"</strong> é equivalente a ter 3 temporizadores TON independentes num PLC — um por estado. O chip 74HC4020 substitui os 3 timers de software com taps de hardware.
+      </div>
+      <h3 style="margin-top:.3rem;">Plano da Aula 9</h3>
+      <div class="step-list">
+        <div class="step-item" style="padding:.4rem .7rem;">
+          <div class="step-n">1</div><div><div class="step-title" style="font-size:.78rem;">Montar o 555 astável e verificar clock com LED</div></div>
+        </div>
+        <div class="step-item" style="padding:.4rem .7rem;">
+          <div class="step-n">2</div><div><div class="step-title" style="font-size:.78rem;">Ligar 74HC4020 e confirmar taps Q₁, Q₂, Q₃</div></div>
+        </div>
+        <div class="step-item" style="padding:.4rem .7rem;">
+          <div class="step-n">3</div><div><div class="step-title" style="font-size:.78rem;">Montar FF-D (74HC74) com clock manual — verificar Q muda</div></div>
+        </div>
+        <div class="step-item" style="padding:.4rem .7rem;">
+          <div class="step-n">4</div><div><div class="step-title" style="font-size:.78rem;">Ligar 74HC157 (MUX) → semáforo automático</div></div>
+        </div>
+        <div class="step-item" style="padding:.4rem .7rem;">
+          <div class="step-n">5</div><div><div class="step-title" style="font-size:.78rem;">Adicionar BTN e testar interrupção de ciclo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════╗ -->
+<!-- ║  8 — AUTOMAÇÃO REAL      ║ -->
+<!-- ╚══════════════════════════╝ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <div><h2>O que isto tem a ver com Automação?</h2><div class="sub">Da bancada ao PLC · do MUX ao GRAFCET</div></div>
+    <div class="slide-num">8 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>A fórmula MUX é a lógica dos PLCs</h3>
+      <div class="note" style="font-size:.78rem;">
+        O que estão a programar no LogiSim é exatamente o que um PLC Siemens S7 faz internamente quando usa um <strong>GRAFCET</strong> (Sequential Function Chart):
+      </div>
+      <div class="eq-box" style="margin-top:.4rem; font-size:.78rem; line-height:1.9;">
+        <div style="color:var(--muted); font-size:.68rem; margin-bottom:.3rem;">// Ladder PLC — equivalente à fórmula MUX</div>
+        <div>IF timer_done THEN</div>
+        <div style="padding-left:1.2rem;"><span class="hi">SET estado_amarelo</span></div>
+        <div style="padding-left:1.2rem;"><span class="hi2">RESET estado_verde</span></div>
+        <div>END_IF</div>
+      </div>
+      <h3 style="margin-top:.4rem;">Sistemas reais que usam este padrão</h3>
+      <table class="tt" style="font-size:.72rem;">
+        <thead><tr><th>Sistema</th><th>Estados</th><th>Controlo</th></tr></thead>
+        <tbody>
+          <tr><td>Semáforo cruzamento</td><td>3–4</td><td>TIMER + BTN peão</td></tr>
+          <tr><td>Portão de fábrica</td><td>4</td><td>BTN + SENSOR + TIMER</td></tr>
+          <tr><td>Linha de engarrafamento</td><td>4–6</td><td>SENSOR nível + TIMER</td></tr>
+          <tr><td>Braço robótico P&amp;P</td><td>6–8</td><td>SENSOR peça + FIM_CURSO</td></tr>
+          <tr><td>Máquina de lavar</td><td>5</td><td>TIMER + SENSOR nível</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <h3>O percurso completo das 4 aulas</h3>
+      <div class="road">
+        <div class="road-item current">
+          <div class="road-badge cur">Aula 8 · Hoje</div>
+          <div>
+            <div class="road-title">LogiSim — circuito digital puro</div>
+            <div class="road-desc">MUX 2:1 + FF-D + LEDs · fórmula D = (T̄·Atual)+(T·Próximo) · BTN de interrupção · 100% software</div>
+          </div>
+        </div>
+        <div class="road-item next">
+          <div class="road-badge nxt">Aula 9 · Online</div>
+          <div>
+            <div class="road-title">TinkerCAD — chips reais simulados</div>
+            <div class="road-desc">74HC157 · 74HC74 · NE555 · 74HC4020 · botões físicos · 3 temporizações distintas · já é hardware virtual</div>
+          </div>
+        </div>
+        <div class="road-item future">
+          <div class="road-badge fut">Aula 10 · Sala</div>
+          <div>
+            <div class="road-title">Breadboard física — bancada real</div>
+            <div class="road-desc">Os mesmos chips em DIP · fios reais · alimentação 5 V · multímetro · osciloscópio · já viram o circuito 2 vezes</div>
+          </div>
+        </div>
+        <div class="road-item future">
+          <div class="road-badge fut">Aula 11 · Sala</div>
+          <div>
+            <div class="road-title">Teste Final</div>
+            <div class="road-desc">FSM → tabela → MUX → equações → circuito · o mesmo percurso que um engenheiro faz do caderno ao painel de controlo</div>
+          </div>
+        </div>
+      </div>
+      <div class="note green" style="font-size:.74rem; margin-top:.4rem;">
+        Quando virem um <strong>Siemens S7-1500</strong> no estágio, vão reconhecer a lógica — estados, condições de transição, saídas por estado. É o mesmo modelo que estão a aprender aqui.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔════════════════╗ -->
+<!-- ║  9 — TP08      ║ -->
+<!-- ╚════════════════╝ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <div><h2>TP08 — Exercícios</h2><div class="sub">Construir · testar · extender · ligar à automação</div></div>
+    <div class="slide-num">9 / 9</div>
+  </div>
+  <div class="slide-body full" style="justify-content:center;">
+    <div class="ex-list" style="max-width:960px;width:100%;">
+      <div class="ex-item">
+        <div class="ex-num">EX.1</div>
+        <div>
+          <div class="ex-title">Construir o semáforo base no LogiSim</div>
+          <div class="ex-desc">Implementar o circuito com 2 MUX 2:1, 2 FF-D, porta NOR, decoders das saídas e 3 LEDs. Verificar o ciclo VERDE→AMARELO→VERMELHO→VERDE com TIMER manual (Input) e clock.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.2</div>
+        <div>
+          <div class="ex-title">Adicionar o BTN de interrupção</div>
+          <div class="ex-desc">Acrescentar a lógica AVANÇA = TIMER + (BTN·NOR(Q₁,Q₀)). Testar: em VERDE com BTN=1 o semáforo avança sem esperar o TIMER. Em AMARELO e VERMELHO, BTN não tem efeito.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.3</div>
+        <div>
+          <div class="ex-title">Saídas Moore dos peões</div>
+          <div class="ex-desc">Adicionar dois LEDs para o semáforo de peões: LED_VERDE_PEÃO = Q₁·Q₀' (só em VERMELHO carros) · LED_VERMELHO_PEÃO = Q₁'+Q₀ (em VERDE e AMARELO carros). Sem novos estados.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.4</div>
+        <div>
+          <div class="ex-title">Tabela de transições + verificação</div>
+          <div class="ex-desc">Preencher a tabela de 6 linhas (3 estados × 2 condições TIMER) com Q₁Q₀, próximo estado, D₁, D₀, e as 3 saídas Moore. Confirmar que D₁=Q₀ e D₀=NOR(Q₁,Q₀) quando TIMER=1.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.5</div>
+        <div>
+          <div class="ex-title">Usar LogiSim Combinational Analysis</div>
+          <div class="ex-desc">Abrir Project → Combinational Analysis. Inserir a tabela de D₁, D₀, VERDE, AMARELO, VERMELHO. Verificar que as equações geradas coincidem com as do método MUX. Gerar o circuito com Build Circuit.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">★</div>
+        <div>
+          <div class="ex-title">Desafio — Semáforo de 4 estados com modo noturno</div>
+          <div class="ex-desc">Adicionar um estado NOTURNO (AMARELO intermitente) ativado por um interruptor NOITE. O semáforo deve entrar em NOTURNO ao fim do ciclo e sair quando NOITE=0. Quantos FF-D são necessários? Desenhar o novo diagrama.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note" style="max-width:960px;width:100%;font-size:.73rem;margin-top:.4rem;">
+      <strong>Fluxo de hoje:</strong> Fórmula MUX → D₁ e D₀ → LogiSim (circuito base) → BTN → peões → Combinational Analysis · Para a semana: mesmo circuito em TinkerCAD com chips reais
+    </div>
+  </div>
+</div>
+
+</div><!-- #deck -->
+
+<div id="dots"></div>
+<div id="nav">
+  <button class="nav-btn" id="prev-btn" onclick="go(-1)" disabled>‹</button>
+  <span id="slide-counter">1 / 9</span>
+  <button class="nav-btn" id="next-btn" onclick="go(1)">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.getElementById('dots');
+  const counter = document.getElementById('slide-counter');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  let cur = 0;
+  slides.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===0?' active':'');
+    d.onclick=()=>show(i);
+    dots.appendChild(d);
+  });
+  function show(n){
+    slides[cur].classList.remove('active');
+    dots.children[cur].classList.remove('active');
+    cur=Math.max(0,Math.min(n,slides.length-1));
+    slides[cur].classList.add('active');
+    dots.children[cur].classList.add('active');
+    counter.textContent=(cur+1)+' / '+slides.length;
+    prevBtn.disabled=cur===0;
+    nextBtn.disabled=cur===slides.length-1;
+  }
+  function go(d){show(cur+d);}
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+  });
+  document.getElementById('deck').addEventListener('click',e=>{
+    if(e.target.closest('#nav')||e.target.closest('#dots')||e.target.closest('#back-btn'))return;
+    go(1);
+  });
+</script>
+</body>
+</html>

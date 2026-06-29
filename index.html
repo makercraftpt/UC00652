@@ -157,7 +157,7 @@
       background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
       height: 100%;
       border-radius: 6px;
-      width: 40%;
+      width: 65%;
       position: relative;
     }
 
@@ -432,10 +432,10 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>6</strong> / 10 aulas concluídas</span>
+        <span><strong>7</strong> / 11 aulas concluídas</span>
       </div>
       <div class="progress-track">
-        <div class="progress-fill" style="width:60%"></div>
+        <div class="progress-fill"></div>
       </div>
     </div>
   </div>
@@ -632,73 +632,102 @@
     </div>
 
     <!-- AULA 7 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 7</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">Concluída</span>
       </div>
-      <div class="card-title">FSM — Tabela de Transições a Fundo · Elevador</div>
+      <div class="card-title">FSM Moore — Tabela de Transições a Fundo · Elevador</div>
       <div class="obj-box">
-        O elevador como FSM com 4 estados. Construção passo a passo da tabela de transições: self-loops, estímulos externos (botões e sensores), derivação de equações D₁D₀ e implementação com 2 FF-D no LogiSim.
+        Máquina de Moore com 4 estados e múltiplas entradas. Self-loops, fluxograma de estados, tabela completa e extração de equações lógicas. Extensão com abertura de porta (6 estados, 3 FF-D).
       </div>
       <ul class="topics">
-        <li>Self-loop — a permanência como transição válida</li>
-        <li>Construir a tabela linha a linha sem deixar combinações por definir</li>
-        <li>Estímulos: BTN (botões) vs. SENSOR (chegada ao andar)</li>
-        <li>Da tabela às equações D₁, D₀ e saídas Moore (P, MS, MD)</li>
-        <li>Implementação e teste do elevador no LogiSim Evolution</li>
+        <li>Self-loops como transições válidas — obrigação na tabela</li>
+        <li>Elevador 4 estados: PISO_0, SUBINDO, PISO_1, DESCENDO</li>
+        <li>Entradas BTN_1, BTN_0, SENSOR · Saídas Moore P, MS, MD</li>
+        <li>Extensão: 6 estados com abertura de porta (FC_PORTA, MP)</li>
+        <li>Excitação FF-D: D = Q' (próximo estado)</li>
       </ul>
       <div class="tags">
         <span class="tag">FSM</span>
+        <span class="tag">Moore</span>
         <span class="tag">Self-loop</span>
+        <span class="tag">FF-D</span>
         <span class="tag">Elevador</span>
-        <span class="tag">LogiSim</span>
       </div>
       <div class="materials">
         <a class="mat-btn btn-slides" href="aula7/index.html">▶ Apresentação</a>
         <a class="mat-btn btn-tp" href="aula7/UC00652_TP07_FSM_Elevador.docx">📄 TP07</a>
+        <a class="mat-btn" style="background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.4);color:#D8B4FE;" href="aula7/anexo_porta.html">🚪 Anexo Porta</a>
       </div>
     </div>
 
     <!-- AULA 8 -->
-    <div class="card upcoming">
+    <div class="card current">
       <div class="card-top">
         <div class="aula-num">Aula 8</div>
-        <span class="status-badge badge-next">Em preparação</span>
+        <span class="status-badge badge-current">Atual</span>
       </div>
-      <div class="card-title">FSM — Mealy e Síntese Avançada</div>
+      <div class="card-title">FSM Moore — Portão Automático · Karnaugh · Equações</div>
+      <div class="obj-box">
+        Fluxograma de estados, tabela de transições completa e extração de equações lógicas com Mapa de Karnaugh. Verificação e geração automática do circuito com LogiSim Combinational Analysis.
+      </div>
       <ul class="topics">
-        <li>Modelo de Mealy: saídas dependem do estado e das entradas</li>
-        <li>Comparação Moore vs. Mealy em exemplos práticos</li>
-        <li>Síntese completa: da especificação ao circuito físico</li>
-        <li>Projeto aplicado: controlador de porta automática</li>
+        <li>Portão automático: FECHADO, ABRINDO, ABERTO, FECHANDO</li>
+        <li>Fluxograma — lógica de decisão estado a estado</li>
+        <li>Karnaugh 2×2 — agrupar células, equações mínimas D₁ e D₀</li>
+        <li>LogiSim Combinational Analysis — verificar e gerar circuito</li>
+        <li>Saídas Moore: MA (motor abre), MF (motor fecha), L (LED)</li>
       </ul>
       <div class="tags">
         <span class="tag">FSM</span>
-        <span class="tag">Mealy</span>
         <span class="tag">Moore</span>
+        <span class="tag">Karnaugh</span>
+        <span class="tag">Portão</span>
         <span class="tag">LogiSim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula8/index.html">▶ Apresentação</a>
       </div>
     </div>
 
-    <!-- AULAS 9–10 -->
+    <!-- AULA 9 -->
     <div class="card upcoming">
       <div class="card-top">
-        <div class="aula-num">Aulas 9–10</div>
+        <div class="aula-num">Aula 9</div>
         <span class="status-badge badge-next">Em preparação</span>
       </div>
-      <div class="card-title">Breadboard com Chips 74xx</div>
+      <div class="card-title">TinkerCAD — Circuito FSM Virtual</div>
       <ul class="topics">
-        <li>Montagem física em breadboard — alimentação 5 V</li>
+        <li>Simulação de breadboard com chips 74xx no TinkerCAD Circuits</li>
+        <li>Montar o circuito FSM do portão com 74HC08, 74HC32, 74HC04 e FF-D</li>
+        <li>Aula online — preparação para a prática presencial</li>
+        <li>Verificar o funcionamento antes de montar a sério</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">TinkerCAD</span>
+        <span class="tag">74xx</span>
+        <span class="tag">Online</span>
+      </div>
+    </div>
+
+    <!-- AULAS 10–11 -->
+    <div class="card upcoming">
+      <div class="card-top">
+        <div class="aula-num">Aulas 10–11</div>
+        <span class="status-badge badge-next">Em preparação</span>
+      </div>
+      <div class="card-title">Bancada Física · Teste Final</div>
+      <ul class="topics">
+        <li>Aula 10: Montagem real em breadboard — alimentação 5 V, chips 74xx</li>
         <li>Pull-up, LEDs indicadores, debounce de botões</li>
-        <li>Chips 74xx — montagem e teste real em bancada</li>
         <li>Verificação com multímetro e osciloscópio</li>
+        <li>Aula 11: Teste Final — síntese de toda a UC</li>
       </ul>
       <div class="tags">
         <span class="tag">Breadboard</span>
         <span class="tag">74xx</span>
-        <span class="tag">Hardware</span>
-        <span class="tag">Osciloscópio</span>
+        <span class="tag">Teste</span>
       </div>
     </div>
 
