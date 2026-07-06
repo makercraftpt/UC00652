@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 9 — FSM Portão Automático · Método MUX · UC00652</title>
+  <style>
+    :root {
+      --navy:   #0A1F3C;
+      --navy2:  #0F2A4A;
+      --navy3:  #071629;
+      --signal: #00C5FF;
+      --green:  #22C55E;
+      --amber:  #D68910;
+      --red:    #EF4444;
+      --cyan:   #06B6D4;
+      --purple: #A855F7;
+      --text:   #E8EDF5;
+      --muted:  #7A96B4;
+      --border: #1A3A5C;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { width:100%; height:100%; background:#000; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+    #deck { width:100vw; height:100vh; position:relative; }
+    .slide {
+      position:absolute; inset:0; background:var(--navy);
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none; transition:opacity 0.35s ease;
+    }
+    .slide.active { opacity:1; pointer-events:auto; }
+    .slide::before {
+      content:''; position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(0,197,255,0.03) 1px,transparent 1px);
+      background-size:50px 50px; pointer-events:none;
+    }
+    .slide-header {
+      background:var(--navy3); border-bottom:2px solid var(--signal);
+      padding:0.65rem 2.2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      position:relative; z-index:1; flex-shrink:0;
+    }
+    .slide-header h2 { font-size:1.2rem; font-weight:700; color:#fff; }
+    .slide-header .sub { font-size:0.72rem; color:var(--signal); font-style:italic; }
+    .slide-num { font-size:0.7rem; color:var(--muted); font-weight:600; letter-spacing:.05em; }
+    .slide-body { flex:1; display:flex; position:relative; z-index:1; overflow:hidden; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+    .wide-left { grid-template-columns:3fr 2fr; }
+    .wide-right { grid-template-columns:2fr 3fr; }
+    .col { padding:1rem 1.5rem; display:flex; flex-direction:column; gap:0.65rem; }
+    .col + .col { border-left:1px solid var(--border); }
+    .full { padding:1rem 2rem; width:100%; display:flex; flex-direction:column; gap:0.75rem; }
+    #s1 { justify-content:center; align-items:center; text-align:center; }
+    #s1::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 40%, rgba(0,197,255,0.08) 0%, transparent 70%); }
+    #s1 .tc { position:relative; z-index:2; }
+    .pill { display:inline-block; background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal); font-size:0.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; padding:.35rem 1rem; border-radius:20px; margin-bottom:1.5rem; }
+    #s1 h1 { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; color:#fff; line-height:1.15; margin-bottom:.5rem; }
+    #s1 h1 em { font-style:normal; color:var(--signal); }
+    #s1 .tagline { font-size:.95rem; color:var(--muted); margin-top:.8rem; }
+    #s1 .tagline span { color:rgba(0,197,255,0.6); margin:0 .4rem; }
+    #s1 .course-id { margin-top:2.5rem; font-size:.78rem; color:var(--muted); }
+    .obj-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; width:100%; }
+    .obj-item { background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; display:flex; gap:.7rem; align-items:flex-start; }
+    .obj-icon { font-size:1.25rem; flex-shrink:0; line-height:1; margin-top:.1rem; }
+    .obj-title { font-size:.84rem; font-weight:700; color:#fff; margin-bottom:.18rem; }
+    .obj-desc  { font-size:.73rem; color:var(--muted); line-height:1.4; }
+    h3 { font-size:.7rem; font-weight:800; color:var(--signal); text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--border); padding-bottom:.3rem; }
+    .note { font-size:.78rem; color:var(--muted); background:rgba(0,197,255,0.05); border-left:3px solid rgba(0,197,255,0.35); padding:.45rem .85rem; border-radius:0 5px 5px 0; line-height:1.5; }
+    .note.green  { border-left-color:var(--green);  background:rgba(34,197,94,0.06);   color:#86EFAC; }
+    .note.amber  { border-left-color:var(--amber);  background:rgba(214,137,16,0.06);  color:#E8C070; }
+    .note.purple { border-left-color:var(--purple); background:rgba(168,85,247,0.06);  color:#D8B4FE; }
+    .note.red    { border-left-color:var(--red);    background:rgba(239,68,68,0.06);   color:#FCA5A5; }
+    ul.pts { list-style:none; display:flex; flex-direction:column; gap:.38rem; }
+    ul.pts li { font-size:.82rem; color:var(--text); display:flex; gap:.6rem; align-items:flex-start; line-height:1.45; }
+    ul.pts li::before { content:'▸'; color:var(--signal); flex-shrink:0; font-size:.72rem; margin-top:.08rem; }
+    ul.pts li.green::before { color:var(--green); }
+    ul.pts li.amber::before { color:var(--amber); }
+    ul.pts li.red::before   { color:var(--red); }
+    ul.pts li.purple::before { color:var(--purple); }
+    .svg-wrap { background:var(--navy2); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:center; align-items:center; flex:1; padding:.4rem; }
+    table.tt { width:100%; border-collapse:collapse; font-size:.77rem; }
+    table.tt th { background:rgba(0,197,255,0.12); color:var(--signal); font-weight:700; padding:.35rem .5rem; text-align:center; border:1px solid var(--border); font-size:.69rem; letter-spacing:.04em; }
+    table.tt td { padding:.3rem .5rem; text-align:center; border:1px solid var(--border); color:var(--text); }
+    table.tt tr.s0 td { background:rgba(0,197,255,0.07); }
+    table.tt tr.s1 td { background:rgba(34,197,94,0.07); color:#86EFAC; }
+    table.tt tr.s2 td { background:rgba(214,137,16,0.07); color:#E8C070; }
+    table.tt tr.s3 td { background:rgba(239,68,68,0.07); color:#FCA5A5; }
+    table.tt tr.seg td { background:rgba(168,85,247,0.1); color:#D8B4FE; }
+    table.tt td.mono { font-family:monospace; font-size:.82rem; font-weight:700; }
+    .eq-box { background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:.65rem 1rem; font-family:monospace; font-size:.8rem; line-height:2; color:var(--text); }
+    .eq-box .em  { color:var(--signal); font-weight:700; }
+    .eq-box .cm  { color:var(--muted); font-size:.68rem; }
+    .eq-box .hi  { color:#86EFAC; font-weight:700; }
+    .eq-box .hi2 { color:#D8B4FE; font-weight:700; }
+    .eq-box .seg { color:#FCA5A5; font-weight:700; }
+    .mux-row { display:flex; gap:.8rem; align-items:stretch; }
+    .mux-block { background:rgba(0,197,255,0.08); border:2px solid rgba(0,197,255,0.35); border-radius:8px; padding:.6rem 1rem; display:flex; flex-direction:column; gap:.3rem; font-family:monospace; font-size:.78rem; flex:1; }
+    .mux-label { font-size:.65rem; font-weight:800; color:var(--signal); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.2rem; }
+    .mux-in  { color:var(--muted); }
+    .mux-sel { color:#86EFAC; font-weight:700; }
+    .mux-out { color:#fff; font-weight:700; border-top:1px solid var(--border); padding-top:.3rem; margin-top:.2rem; }
+    .step-list { display:flex; flex-direction:column; gap:.42rem; }
+    .step-item { display:flex; gap:.8rem; align-items:flex-start; background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.5rem .8rem; }
+    .step-n { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.72rem; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .step-title { font-size:.82rem; font-weight:700; color:#fff; margin-bottom:.1rem; }
+    .step-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+    .step-code  { font-family:monospace; font-size:.68rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:4px; padding:.12rem .4rem; color:var(--signal); display:inline-block; margin-top:.18rem; }
+    .road { display:flex; flex-direction:column; gap:.4rem; }
+    .road-item { display:flex; gap:.9rem; align-items:flex-start; padding:.55rem .9rem; border-radius:7px; border:1px solid var(--border); }
+    .road-item.current { border-color:var(--signal); background:rgba(0,197,255,0.06); }
+    .road-item.done    { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.04); }
+    .road-item.future  { background:var(--navy2); }
+    .road-badge { font-size:.62rem; font-weight:800; padding:.2rem .5rem; border-radius:4px; flex-shrink:0; margin-top:.12rem; white-space:nowrap; }
+    .road-badge.cur  { background:rgba(0,197,255,0.18); color:var(--signal); }
+    .road-badge.done { background:rgba(34,197,94,0.18); color:#86EFAC; }
+    .road-badge.fut  { background:rgba(255,255,255,0.06); color:var(--muted); }
+    .road-title { font-size:.84rem; font-weight:700; color:#fff; margin-bottom:.1rem; }
+    .road-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+    .ex-list { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .ex-item { background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.55rem .85rem; display:flex; gap:.7rem; align-items:flex-start; }
+    .ex-num { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.66rem; font-weight:800; padding:.12rem .38rem; border-radius:4px; flex-shrink:0; margin-top:.08rem; }
+    .ex-title { font-size:.8rem; font-weight:700; color:#fff; margin-bottom:.14rem; }
+    .ex-desc  { font-size:.68rem; color:var(--muted); line-height:1.4; }
+    .sensor-pill { display:inline-flex; align-items:center; gap:.4rem; background:var(--navy2); border:1px solid var(--border); border-radius:6px; padding:.3rem .7rem; font-size:.78rem; }
+    .sensor-name { font-family:monospace; font-weight:700; }
+    #back-btn { position:fixed; top:.75rem; left:1rem; z-index:200; color:var(--muted); font-size:.75rem; text-decoration:none; background:rgba(10,31,60,0.85); border:1px solid var(--border); padding:.3rem .75rem; border-radius:5px; transition:color .15s; }
+    #back-btn:hover { color:var(--signal); }
+    #nav { position:fixed; bottom:1.2rem; right:1.5rem; display:flex; align-items:center; gap:.6rem; z-index:100; }
+    .nav-btn { background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+    .nav-btn:hover { background:rgba(0,197,255,0.25); }
+    .nav-btn:disabled { opacity:.3; cursor:default; }
+    #slide-counter { font-size:.72rem; color:var(--muted); min-width:40px; text-align:center; font-weight:600; }
+    #dots { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); display:flex; gap:.45rem; z-index:100; }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--border); transition:background .2s,transform .2s; cursor:pointer; }
+    .dot.active { background:var(--signal); transform:scale(1.35); }
+  </style>
+</head>
+<body>
+<a id="back-btn" href="../index.html">← UC00652</a>
+<div id="deck">
+
+<!-- ╔══════════════╗ -->
+<!-- ║  1 — TÍTULO  ║ -->
+<!-- ╚══════════════╝ -->
+<div class="slide active" id="s1">
+  <div class="tc">
+    <div class="pill">UC00652 · Aula 9</div>
+    <h1>FSM Moore — <em>Portão Automático</em></h1>
+    <h1 style="font-size:clamp(1rem,2.2vw,1.55rem);color:var(--muted);font-weight:400;margin-top:.4rem;">
+      Sensor de Segurança · Método MUX · LogiSim
+    </h1>
+    <p class="tagline">
+      4 estados <span>▸</span> 2 FF-D <span>▸</span> BTN + S_TOP + S_BOT + S_SEG <span>▸</span> emergência sem novo estado
+    </p>
+    <p class="course-id">523RA018 · Escola Sicó · 2025–2026</p>
+  </div>
+</div>
+
+<!-- ╔════════════════╗ -->
+<!-- ║  2 — OBJETIVOS ║ -->
+<!-- ╚════════════════╝ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <div><h2>Objetivos da Aula 9</h2><div class="sub">Consolidar o método MUX · novo sistema · sensor de segurança</div></div>
+    <div class="slide-num">2 / 9</div>
+  </div>
+  <div class="slide-body full" style="justify-content:center;align-items:center;">
+    <div class="obj-grid" style="max-width:900px;">
+      <div class="obj-item">
+        <div class="obj-icon">🔁</div>
+        <div>
+          <div class="obj-title">Consolidar o método MUX</div>
+          <div class="obj-desc">Aplicar D = (T̄·Atual) + (T·Próximo) a um sistema novo — portão com 4 estados e múltiplas entradas</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">🚧</div>
+        <div>
+          <div class="obj-title">Transição de emergência</div>
+          <div class="obj-desc">O sensor S_SEG reverte o portão sem adicionar novos estados — FSM robusto com a mesma complexidade</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">⚡</div>
+        <div>
+          <div class="obj-title">AVANÇA composto</div>
+          <div class="obj-desc">Condição de avanço diferente por estado: BTN, S_TOP, S_BOT/S_SEG — derivar e simplificar</div>
+        </div>
+      </div>
+      <div class="obj-item">
+        <div class="obj-icon">💻</div>
+        <div>
+          <div class="obj-title">LogiSim — construir e testar</div>
+          <div class="obj-desc">Montar o circuito completo e verificar: ciclo normal + interrupção por S_SEG + saídas Moore</div>
+        </div>
+      </div>
+    </div>
+    <div class="note" style="max-width:900px;">Revisão da aula anterior: semáforo com TIMER único. Hoje: múltiplas entradas, AVANÇA diferente por estado, transição de emergência. Mesma fórmula MUX.</div>
+  </div>
+</div>
+
+<!-- ╔══════════════════╗ -->
+<!-- ║  3 — O SISTEMA   ║ -->
+<!-- ╚══════════════════╝ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <div><h2>O Sistema — Portão Automático</h2><div class="sub">4 entradas · 4 estados · motor reversível · segurança obrigatória</div></div>
+    <div class="slide-num">3 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Estados (2 FF-D)</h3>
+      <table class="tt">
+        <tr><th>Estado</th><th>Q₁Q₀</th><th>Motor</th><th>LED</th></tr>
+        <tr class="s0"><td>FECHADO</td><td class="mono">00</td><td>Parado ↓</td><td>Azul fixo</td></tr>
+        <tr class="s1"><td>ABRINDO</td><td class="mono">01</td><td>Sobe ↑</td><td>Verde pisca</td></tr>
+        <tr class="s2"><td>ABERTO</td><td class="mono">10</td><td>Parado ↑</td><td>Âmbar fixo</td></tr>
+        <tr class="s3"><td>FECHANDO</td><td class="mono">11</td><td>Desce ↓</td><td>Vermelho pisca</td></tr>
+      </table>
+      <h3 style="margin-top:.4rem;">Entradas</h3>
+      <div style="display:flex;flex-direction:column;gap:.35rem;">
+        <div class="sensor-pill"><span class="sensor-name" style="color:var(--signal);">BTN</span><span style="color:var(--muted);font-size:.75rem;">Botão do utilizador — abre se fechado, fecha se aberto</span></div>
+        <div class="sensor-pill"><span class="sensor-name" style="color:var(--green);">S_TOP</span><span style="color:var(--muted);font-size:.75rem;">Sensor fim de curso superior — portão totalmente aberto</span></div>
+        <div class="sensor-pill"><span class="sensor-name" style="color:var(--amber);">S_BOT</span><span style="color:var(--muted);font-size:.75rem;">Sensor fim de curso inferior — portão totalmente fechado</span></div>
+        <div class="sensor-pill"><span class="sensor-name" style="color:var(--red);">S_SEG</span><span style="color:var(--muted);font-size:.75rem;">Sensor de segurança — obstáculo detetado durante fecho</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Ciclo normal</h3>
+      <ul class="pts">
+        <li>Portão em <b>FECHADO</b> — utilizador prime BTN → motor arranca, estado → <b>ABRINDO</b></li>
+        <li>Motor sobe até S_TOP=1 → para automáticamente, estado → <b>ABERTO</b></li>
+        <li>Utilizador prime BTN novamente → motor desce, estado → <b>FECHANDO</b></li>
+        <li>Motor desce até S_BOT=1 → para, estado → <b>FECHADO</b></li>
+      </ul>
+      <h3 style="margin-top:.4rem;">Transição de emergência</h3>
+      <div class="note red">
+        <b>S_SEG=1 durante FECHANDO</b> — obstáculo detetado (pessoa, veículo, animal).<br>
+        Motor inverte <b>imediatamente</b>: estado → ABRINDO.<br>
+        Sem novos estados. Sem novo FF-D. Só uma equação diferente para D₀.
+      </div>
+      <div class="note amber">
+        Nos portões industriais, S_SEG é normalmente uma <b>barreira de infravermelhos</b> ou <b>sensor de pressão</b> no bordo do portão. Requisito legal em instalações com passagem de pessoas.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═══════════════════════╗ -->
+<!-- ║  4 — DIAGRAMA ESTADOS ║ -->
+<!-- ╚═══════════════════════╝ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div><h2>Diagrama de Estados</h2><div class="sub">Moore · 4 estados · 2 FF-D · seta de emergência a vermelho</div></div>
+    <div class="slide-num">4 / 9</div>
+  </div>
+  <div class="slide-body two-col wide-left">
+    <div class="col" style="justify-content:center;align-items:center;">
+      <div class="svg-wrap" style="width:100%;max-width:520px;">
+        <svg viewBox="0 0 520 400" width="100%" height="100%">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#00C5FF"/>
+            </marker>
+            <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#22C55E"/>
+            </marker>
+            <marker id="arr-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#EF4444"/>
+            </marker>
+            <marker id="arr-a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#D68910"/>
+            </marker>
+            <marker id="arr-p" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 Z" fill="#A855F7"/>
+            </marker>
+          </defs>
+
+          <!-- S0 FECHADO — topo esquerdo -->
+          <circle cx="130" cy="100" r="52" fill="#071629" stroke="#00C5FF" stroke-width="2"/>
+          <text x="130" y="94" text-anchor="middle" font-size="13" font-weight="800" fill="#00C5FF" font-family="monospace">FECHADO</text>
+          <text x="130" y="110" text-anchor="middle" font-size="11" fill="#7A96B4" font-family="monospace">Q₁Q₀=00</text>
+          <text x="130" y="125" text-anchor="middle" font-size="10" fill="#7A96B4" font-family="sans-serif">LED azul</text>
+
+          <!-- S1 ABRINDO — topo direito -->
+          <circle cx="390" cy="100" r="52" fill="#071629" stroke="#22C55E" stroke-width="2"/>
+          <text x="390" y="94" text-anchor="middle" font-size="13" font-weight="800" fill="#22C55E" font-family="monospace">ABRINDO</text>
+          <text x="390" y="110" text-anchor="middle" font-size="11" fill="#7A96B4" font-family="monospace">Q₁Q₀=01</text>
+          <text x="390" y="125" text-anchor="middle" font-size="10" fill="#7A96B4" font-family="sans-serif">LED verde</text>
+
+          <!-- S2 ABERTO — baixo direito -->
+          <circle cx="390" cy="300" r="52" fill="#071629" stroke="#D68910" stroke-width="2"/>
+          <text x="390" y="294" text-anchor="middle" font-size="13" font-weight="800" fill="#D68910" font-family="monospace">ABERTO</text>
+          <text x="390" y="310" text-anchor="middle" font-size="11" fill="#7A96B4" font-family="monospace">Q₁Q₀=10</text>
+          <text x="390" y="325" text-anchor="middle" font-size="10" fill="#7A96B4" font-family="sans-serif">LED âmbar</text>
+
+          <!-- S3 FECHANDO — baixo esquerdo -->
+          <circle cx="130" cy="300" r="52" fill="#071629" stroke="#EF4444" stroke-width="2"/>
+          <text x="130" y="294" text-anchor="middle" font-size="13" font-weight="800" fill="#EF4444" font-family="monospace">FECHANDO</text>
+          <text x="130" y="310" text-anchor="middle" font-size="11" fill="#7A96B4" font-family="monospace">Q₁Q₀=11</text>
+          <text x="130" y="325" text-anchor="middle" font-size="10" fill="#7A96B4" font-family="sans-serif">LED verm.</text>
+
+          <!-- FECHADO → ABRINDO (BTN=1) -->
+          <path d="M182,90 L338,90" stroke="#22C55E" stroke-width="1.8" fill="none" marker-end="url(#arr-g)"/>
+          <rect x="225" y="73" width="70" height="16" rx="3" fill="#071629"/>
+          <text x="260" y="84" text-anchor="middle" font-size="10" fill="#22C55E" font-family="monospace">BTN=1</text>
+
+          <!-- ABRINDO self-loop (S_TOP=0) -->
+          <path d="M430,65 Q480,30 460,90" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arr-p)" stroke-dasharray="4 2"/>
+          <text x="488" y="55" text-anchor="middle" font-size="9" fill="#A855F7" font-family="monospace">S_TOP=0</text>
+
+          <!-- ABRINDO → ABERTO (S_TOP=1) -->
+          <path d="M390,152 L390,248" stroke="#22C55E" stroke-width="1.8" fill="none" marker-end="url(#arr-g)"/>
+          <rect x="396" y="190" width="62" height="16" rx="3" fill="#071629"/>
+          <text x="427" y="201" text-anchor="middle" font-size="10" fill="#22C55E" font-family="monospace">S_TOP=1</text>
+
+          <!-- ABERTO → FECHANDO (BTN=1) -->
+          <path d="M338,310 L182,310" stroke="#00C5FF" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+          <rect x="225" y="315" width="70" height="16" rx="3" fill="#071629"/>
+          <text x="260" y="326" text-anchor="middle" font-size="10" fill="#00C5FF" font-family="monospace">BTN=1</text>
+
+          <!-- FECHANDO → FECHADO (S_BOT=1) -->
+          <path d="M130,248 L130,152" stroke="#00C5FF" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+          <rect x="80" y="190" width="62" height="16" rx="3" fill="#071629"/>
+          <text x="111" y="201" text-anchor="middle" font-size="10" fill="#00C5FF" font-family="monospace">S_BOT=1</text>
+
+          <!-- FECHADO self-loop (BTN=0) -->
+          <path d="M90,65 Q40,30 78,90" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arr-p)" stroke-dasharray="4 2"/>
+          <text x="30" y="55" text-anchor="middle" font-size="9" fill="#A855F7" font-family="monospace">BTN=0</text>
+
+          <!-- FECHANDO self-loop (BOT=0, SEG=0) -->
+          <path d="M90,335 Q40,370 78,310" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arr-p)" stroke-dasharray="4 2"/>
+          <text x="20" y="375" text-anchor="middle" font-size="9" fill="#A855F7" font-family="monospace">BOT=SEG=0</text>
+
+          <!-- ABERTO self-loop (BTN=0) -->
+          <path d="M430,335 Q480,370 460,310" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arr-p)" stroke-dasharray="4 2"/>
+          <text x="498" y="375" text-anchor="middle" font-size="9" fill="#A855F7" font-family="monospace">BTN=0</text>
+
+          <!-- S_SEG EMERGENCY: FECHANDO → ABRINDO (curva longa) -->
+          <path d="M150,255 Q120,200 150,150 Q200,80 340,80" stroke="#EF4444" stroke-width="2.5" fill="none" marker-end="url(#arr-r)" stroke-dasharray="6 3"/>
+          <rect x="55" y="188" width="78" height="18" rx="4" fill="#1A0808"/>
+          <text x="94" y="200" text-anchor="middle" font-size="10" fill="#EF4444" font-family="monospace" font-weight="800">S_SEG=1 ⚠</text>
+        </svg>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Legenda</h3>
+      <ul class="pts">
+        <li class="green">Setas verdes — transição normal (BTN ou sensor de fim de curso)</li>
+        <li>Setas azuis — retorno ao estado base (FECHADO)</li>
+        <li class="purple">Setas a tracejado — self-loops (estado mantém-se)</li>
+        <li class="red"><b>Seta vermelha a tracejado grosso</b> — transição de emergência S_SEG: FECHANDO → ABRINDO</li>
+      </ul>
+      <h3 style="margin-top:.2rem;">Observações chave</h3>
+      <div class="note">
+        4 estados → 2 FF-D (Q₁Q₀). O estado <b>11 é válido</b> (FECHANDO) — diferente do semáforo onde 11 era don't care.
+      </div>
+      <div class="note red">
+        A seta de emergência é a novidade: de FECHANDO podem ir para 2 estados diferentes consoante a entrada (S_BOT → FECHADO, S_SEG → ABRINDO). Isto muda D₀_next mas não D₁_next.
+      </div>
+      <div class="note amber">
+        Missão do Draw.io: reproduzir este diagrama. As setas de self-loop (tracejado) e a seta de emergência (vermelha) são obrigatórias.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═══════════════════════════╗ -->
+<!-- ║  5 — TABELA DE TRANSIÇÕES ║ -->
+<!-- ╚═══════════════════════════╝ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <div><h2>Tabela de Transições</h2><div class="sub">9 linhas relevantes · leitura de D₁ e D₀ · padrões</div></div>
+    <div class="slide-num">5 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Tabela completa</h3>
+      <table class="tt">
+        <tr><th>Estado</th><th>Q₁Q₀</th><th>Condição</th><th>Seguinte</th><th>D₁</th><th>D₀</th></tr>
+        <tr class="s0"><td>FECHADO</td><td class="mono">00</td><td>BTN=0</td><td>FECHADO</td><td class="mono">0</td><td class="mono">0</td></tr>
+        <tr class="s0"><td>FECHADO</td><td class="mono">00</td><td>BTN=1</td><td>ABRINDO</td><td class="mono">0</td><td class="mono">1</td></tr>
+        <tr class="s1"><td>ABRINDO</td><td class="mono">01</td><td>S_TOP=0</td><td>ABRINDO</td><td class="mono">0</td><td class="mono">1</td></tr>
+        <tr class="s1"><td>ABRINDO</td><td class="mono">01</td><td>S_TOP=1</td><td>ABERTO</td><td class="mono">1</td><td class="mono">0</td></tr>
+        <tr class="s2"><td>ABERTO</td><td class="mono">10</td><td>BTN=0</td><td>ABERTO</td><td class="mono">1</td><td class="mono">0</td></tr>
+        <tr class="s2"><td>ABERTO</td><td class="mono">10</td><td>BTN=1</td><td>FECHANDO</td><td class="mono">1</td><td class="mono">1</td></tr>
+        <tr class="s3"><td>FECHANDO</td><td class="mono">11</td><td>BOT=SEG=0</td><td>FECHANDO</td><td class="mono">1</td><td class="mono">1</td></tr>
+        <tr class="s3"><td>FECHANDO</td><td class="mono">11</td><td>S_BOT=1</td><td>FECHADO</td><td class="mono">0</td><td class="mono">0</td></tr>
+        <tr class="seg"><td>FECHANDO</td><td class="mono">11</td><td>S_SEG=1 ⚠</td><td>ABRINDO</td><td class="mono">0</td><td class="mono">1</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>Leitura das colunas — quando AVANÇA=1</h3>
+      <div class="eq-box">
+        <span class="em">D₁_next:</span> <span style="font-family:monospace">0, 1, 1, 0, 0</span><br>
+        <span class="cm">→ 00→0, 01→1, 10→1, 11→0, 11(seg)→0</span><br>
+        <span class="hi">= XOR(Q₁, Q₀)</span> <span class="cm">// padrão em todos os casos!</span>
+      </div>
+      <div class="eq-box">
+        <span class="em">D₀_next:</span> <span style="font-family:monospace">1, 0, 1, 0, 1</span><br>
+        <span class="cm">→ normalmente inverte Q₀ (1,0,1,0)</span><br>
+        <span class="cm">→ exceto FECHANDO+S_SEG: fica a 1</span><br>
+        <span class="hi">= Q₀' + (Q₁·Q₀·S_SEG)</span>
+      </div>
+      <h3 style="margin-top:.2rem;">AVANÇA por estado</h3>
+      <div class="eq-box" style="font-size:.75rem; line-height:1.9;">
+        <span class="cm">// BTN ativo quando Q₀=0 (FECHADO e ABERTO)</span><br>
+        <span class="cm">// S_TOP só em ABRINDO (Q₁'·Q₀)</span><br>
+        <span class="cm">// S_BOT ou S_SEG só em FECHANDO (Q₁·Q₀)</span><br>
+        <span class="em">AVANÇA</span> = <span class="hi">BTN·Q₀'</span> + <span class="hi">S_TOP·Q₁'·Q₀</span> + <span class="seg">(S_BOT+S_SEG)·Q₁·Q₀</span>
+      </div>
+      <div class="note green">
+        S_SEG só afeta D₀ — e apenas no estado FECHANDO. D₁ é XOR(Q₁,Q₀) independentemente da emergência.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═════════════════╗ -->
+<!-- ║  6 — EQUAÇÕES   ║ -->
+<!-- ╚═════════════════╝ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div><h2>Equações Finais — Método MUX</h2><div class="sub">D = (AVANÇA' · Atual) + (AVANÇA · Próximo)</div></div>
+    <div class="slide-num">6 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Os dois MUX</h3>
+      <div class="mux-row">
+        <div class="mux-block">
+          <div class="mux-label">MUX 2:1 → D₁</div>
+          <div class="mux-in">A₀ = Q₁  <span style="color:var(--muted);font-size:.7rem;">(fica)</span></div>
+          <div class="mux-in">A₁ = XOR(Q₁,Q₀)  <span style="color:var(--muted);font-size:.7rem;">(avança)</span></div>
+          <div class="mux-sel">Sel = AVANÇA</div>
+          <div class="mux-out">D₁ = AVANÇA'·Q₁ + AVANÇA·XOR(Q₁,Q₀)</div>
+        </div>
+      </div>
+      <div class="mux-row" style="margin-top:.5rem;">
+        <div class="mux-block" style="border-color:rgba(168,85,247,0.5);">
+          <div class="mux-label" style="color:#D8B4FE;">MUX 2:1 → D₀</div>
+          <div class="mux-in">A₀ = Q₀  <span style="color:var(--muted);font-size:.7rem;">(fica)</span></div>
+          <div class="mux-in">A₁ = Q₀' + Q₁·Q₀·S_SEG  <span style="color:var(--muted);font-size:.7rem;">(avança)</span></div>
+          <div class="mux-sel" style="color:#D8B4FE;">Sel = AVANÇA</div>
+          <div class="mux-out">D₀ = AVANÇA'·Q₀ + AVANÇA·(Q₀'+Q₁·Q₀·S_SEG)</div>
+        </div>
+      </div>
+      <div class="note amber">
+        O extra do sensor de segurança é apenas um termo AND a mais no ramo A₁ do MUX D₀: <b>Q₁·Q₀·S_SEG</b> — é a deteção do estado FECHANDO com obstáculo.
+      </div>
+    </div>
+    <div class="col">
+      <h3>Componentes necessários no LogiSim</h3>
+      <div class="eq-box" style="font-size:.74rem; line-height:1.8;">
+        <span class="cm">// AVANÇA</span><br>
+        <span class="em">NOT</span>(Q₀) → AND com BTN → <span class="hi">parte A</span><br>
+        NOT(Q₁), AND com Q₀, AND com S_TOP → <span class="hi">parte B</span><br>
+        OR(S_BOT,S_SEG), AND com Q₁, AND com Q₀ → <span class="hi">parte C</span><br>
+        OR(A, B, C) → <span class="em">AVANÇA</span><br><br>
+        <span class="cm">// D₁</span><br>
+        <span class="em">XOR</span>(Q₁,Q₀) → MUX A₁ · Q₁ → MUX A₀ · Sel=AVANÇA → D₁<br><br>
+        <span class="cm">// D₀ (bloco de emergência)</span><br>
+        NOT(Q₀) → OR com (AND Q₁,Q₀,S_SEG) → MUX A₁<br>
+        Q₀ → MUX A₀ · Sel=AVANÇA → D₀
+      </div>
+      <div class="note green">
+        Componentes: 2 FF-D · 2 MUX 2:1 · 1 XOR · 3 NOT · 5 AND · 3 OR · 4 LEDs saída
+      </div>
+      <div class="note purple">
+        Saídas Moore: <b>LED_F</b>=Q₁'·Q₀' · <b>LED_A</b>=Q₁'·Q₀ · <b>LED_AB</b>=Q₁·Q₀' · <b>LED_FE</b>=Q₁·Q₀
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════╗ -->
+<!-- ║  7 — LOGISIM     ║ -->
+<!-- ╚══════════════════╝ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <div><h2>Construção no LogiSim</h2><div class="sub">Módulo a módulo · testar cada bloco antes de ligar</div></div>
+    <div class="slide-num">7 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Passos de construção</h3>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n">1</div>
+          <div><div class="step-title">2 FF-D com clock</div><div class="step-desc">Memory → D Flip-Flop. Testar que Q muda ao clicar clock com D=1. Labels: Q1 e Q0.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">2</div>
+          <div><div class="step-title">Bloco AVANÇA</div><div class="step-desc">Construir as 3 partes (A: BTN·Q₀' · B: S_TOP·Q₁'·Q₀ · C: (S_BOT+S_SEG)·Q₁·Q₀) e OR final.</div><div class="step-code">Testar: em cada estado, só a entrada correta ativa AVANÇA</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">3</div>
+          <div><div class="step-title">MUX para D₁</div><div class="step-desc">XOR(Q₁,Q₀) para A₁ · Q₁ para A₀ · AVANÇA para Sel. Verificar com tabela.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">4</div>
+          <div><div class="step-title">MUX para D₀</div><div class="step-desc">Bloco de emergência: Q₀' OR (Q₁·Q₀·S_SEG) para A₁ · Q₀ para A₀ · AVANÇA para Sel.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">5</div>
+          <div><div class="step-title">Decoder de saídas (4 LEDs)</div><div class="step-desc">LED_F=Q₁'Q₀' · LED_A=Q₁'Q₀ · LED_AB=Q₁Q₀' · LED_FE=Q₁Q₀ (AND + NOT)</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">6</div>
+          <div><div class="step-title">Testar ciclo normal</div><div class="step-desc">BTN → ABRINDO → S_TOP → ABERTO → BTN → FECHANDO → S_BOT → FECHADO</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">7</div>
+          <div><div class="step-title">Testar emergência S_SEG</div><div class="step-desc">Colocar portão em FECHANDO · ativar S_SEG=1 · verificar que vai para ABRINDO. Testar S_SEG em ABERTO — não deve ter efeito.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Dica de organização</h3>
+      <ul class="pts">
+        <li>Separar o circuito em 3 blocos visuais: <b>AVANÇA</b> (esquerda) · <b>MUX+FF-D</b> (centro) · <b>decoder LEDs</b> (direita)</li>
+        <li>Usar <b>labels de fio</b> (Wiring → Wire) para AVANÇA, Q₁, Q₀ — evita fios cruzados</li>
+        <li class="amber">Começar sempre com clock manual (Ctrl+K) para verificar estado a estado</li>
+        <li class="green">Project → Combinational Analysis no final para confirmar as equações</li>
+      </ul>
+      <h3 style="margin-top:.4rem;">Tabela de testes</h3>
+      <table class="tt" style="font-size:.72rem;">
+        <tr><th>Estado</th><th>Entrada</th><th>Esperado</th></tr>
+        <tr class="s0"><td>FECHADO</td><td>BTN=1</td><td>→ ABRINDO</td></tr>
+        <tr class="s1"><td>ABRINDO</td><td>S_TOP=1</td><td>→ ABERTO</td></tr>
+        <tr class="s2"><td>ABERTO</td><td>BTN=1</td><td>→ FECHANDO</td></tr>
+        <tr class="s3"><td>FECHANDO</td><td>S_BOT=1</td><td>→ FECHADO</td></tr>
+        <tr class="seg"><td>FECHANDO</td><td>S_SEG=1 ⚠</td><td>→ ABRINDO</td></tr>
+        <tr class="s1"><td>ABRINDO</td><td>S_SEG=1</td><td>sem efeito</td></tr>
+        <tr class="s2"><td>ABERTO</td><td>S_SEG=1</td><td>sem efeito</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ╔════════════════════╗ -->
+<!-- ║  8 — AUTOMAÇÃO     ║ -->
+<!-- ╚════════════════════╝ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <div><h2>Ligação à Automação Industrial</h2><div class="sub">Do LogiSim ao PLC · segurança obrigatória em instalações reais</div></div>
+    <div class="slide-num">8 / 9</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Do FSM ao GRAFCET (IEC 61131-3)</h3>
+      <div class="eq-box" style="font-size:.74rem; line-height:1.9;">
+        <span class="cm">// PLC Siemens S7 — linguagem SFC/GRAFCET</span><br>
+        <span class="em">ETAPA</span> FECHANDO:<br>
+        &nbsp;&nbsp;TRANSIÇÃO → FECHADO: <span class="hi">S_BOT</span><br>
+        &nbsp;&nbsp;TRANSIÇÃO → ABRINDO: <span class="seg">S_SEG</span> <span class="cm">// emergência</span><br><br>
+        <span class="cm">// Em Ladder (LD):</span><br>
+        <span class="em">|---[S_BOT]---[/FECHANDO_ATIVO]---( SET FECHADO )</span><br>
+        <span class="seg">|---[S_SEG]---[/FECHANDO_ATIVO]---( SET ABRINDO )</span>
+      </div>
+      <div class="note amber">
+        A transição de emergência S_SEG tem <b>prioridade</b> sobre S_BOT em PLCs reais — é tratada como interrupção ou transição de maior prioridade no SFC.
+      </div>
+      <h3 style="margin-top:.4rem;">Normas de segurança</h3>
+      <ul class="pts">
+        <li class="red">EN 12453 — requisitos de força e segurança para portões motorizados</li>
+        <li class="red">ISO 13849 — nível de desempenho (PL) para funções de segurança</li>
+        <li class="amber">S_SEG em instalações reais = categoria SIL 2 (sensor redundante)</li>
+        <li>O FSM que modelaram hoje é a base do controlador de segurança</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Sistemas com este padrão</h3>
+      <table class="tt" style="font-size:.74rem;">
+        <tr><th>Sistema</th><th>Estados</th><th>Sensor segurança</th></tr>
+        <tr class="s0"><td>Portão garagem</td><td>4</td><td>Barreira IR / pressão bordo</td></tr>
+        <tr class="s1"><td>Cancela de parque</td><td>3</td><td>Sensor de presença</td></tr>
+        <tr class="s2"><td>Elevador</td><td>5+</td><td>Sensor porta + limite força</td></tr>
+        <tr class="s3"><td>Linha engarrafamento</td><td>5</td><td>Sensor encravamento</td></tr>
+        <tr class="seg"><td>Braço robótico</td><td>6–8</td><td>Zona de segurança laser</td></tr>
+      </table>
+      <h3 style="margin-top:.4rem;">Percurso das aulas</h3>
+      <div class="road">
+        <div class="road-item done">
+          <div class="road-badge done">Aulas 1–8</div>
+          <div><div class="road-title">FSM · FF-D · Semáforo MUX</div><div class="road-desc">Bases, tabelas, equações, LogiSim</div></div>
+        </div>
+        <div class="road-item current">
+          <div class="road-badge cur">Aula 9 · Hoje</div>
+          <div><div class="road-title">Portão automático com segurança</div><div class="road-desc">Múltiplas entradas · emergência · MUX composto</div></div>
+        </div>
+        <div class="road-item future">
+          <div class="road-badge fut">Dia 19 — Online</div>
+          <div><div class="road-title">TinkerCAD — chips reais</div><div class="road-desc">74HC157 · 74HC74 · NE555 · 74HC4020</div></div>
+        </div>
+        <div class="road-item future">
+          <div class="road-badge fut">Dia 20 — Sala</div>
+          <div><div class="road-title">Breadboard física</div><div class="road-desc">Montagem real · multímetro · validação</div></div>
+        </div>
+        <div class="road-item future">
+          <div class="road-badge fut">Dia 27 — Avaliação</div>
+          <div><div class="road-title">Teste final (2h)</div><div class="road-desc">FSM → tabela → MUX → circuito</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════╗ -->
+<!-- ║  9 — TP09    ║ -->
+<!-- ╚══════════════╝ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <div><h2>TP09 — Exercícios</h2><div class="sub">Draw.io · tabela · equações · LogiSim · emergência</div></div>
+    <div class="slide-num">9 / 9</div>
+  </div>
+  <div class="slide-body full">
+    <div class="ex-list" style="flex:1;">
+      <div class="ex-item">
+        <div class="ex-num">EX.1</div>
+        <div>
+          <div class="ex-title">Diagrama de estados no Draw.io</div>
+          <div class="ex-desc">4 círculos (FECHADO/ABRINDO/ABERTO/FECHANDO) · setas com condições · self-loops · seta de emergência S_SEG a vermelho. Exportar e colar na ficha.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.2</div>
+        <div>
+          <div class="ex-title">Tabela de transições</div>
+          <div class="ex-desc">9 linhas · preencher estado seguinte, D₁ e D₀. Identificar a linha de emergência e justificar D₀=1 quando S_SEG=1.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.3</div>
+        <div>
+          <div class="ex-title">Equações MUX</div>
+          <div class="ex-desc">Passo 1: identificar D₁_next = XOR(Q₁,Q₀). Passo 2: identificar D₀_next. Passo 3: escrever AVANÇA. Passo 4: equações finais D₁ e D₀.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.4</div>
+        <div>
+          <div class="ex-title">Construir no LogiSim</div>
+          <div class="ex-desc">Seguir os 7 passos: FF-D → AVANÇA → MUX D₁ → MUX D₀ → LEDs → testar ciclo → testar emergência. Assinalar cada passo.</div>
+        </div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">EX.5</div>
+        <div>
+          <div class="ex-title">Verificação do sensor de segurança</div>
+          <div class="ex-desc">Testar 7 cenários da tabela de testes. Confirmar que S_SEG só tem efeito em FECHANDO. Registar resultados.</div>
+        </div>
+      </div>
+      <div class="ex-item" style="border-color:var(--amber);background:rgba(214,137,16,0.06);">
+        <div class="ex-num" style="background:rgba(214,137,16,0.2);color:var(--amber);">★</div>
+        <div>
+          <div class="ex-title" style="color:var(--amber);">Desafio — Modo AVARIA</div>
+          <div class="ex-desc">Adicionar um 5.º estado AVARIA (LED vermelho fixo, motor parado) ativado quando S_SEG dispara 3 vezes consecutivas. Quantos FF-D? Novo contador necessário?</div>
+        </div>
+      </div>
+    </div>
+    <div class="note green">Para a semana (Dia 19): mesmo portão em TinkerCAD — 74HC157 (MUX) + 74HC74 (FF-D) + lógica discreta para AVANÇA + S_SEG</div>
+  </div>
+</div>
+
+</div><!-- #deck -->
+
+<!-- DOTS -->
+<div id="dots"></div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nav-btn" id="prev" onclick="go(-1)">&#8592;</button>
+  <span id="slide-counter">1 / 9</span>
+  <button class="nav-btn" id="next" onclick="go(1)">&#8594;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const counter = document.getElementById('slide-counter');
+  const N = slides.length;
+  let cur = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => show(i);
+    dotsEl.appendChild(d);
+  });
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('active');
+    cur = (n + N) % N;
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${N}`;
+    document.getElementById('prev').disabled = cur === 0;
+    document.getElementById('next').disabled = cur === N - 1;
+  }
+
+  function go(d) { show(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+
+  show(0);
+</script>
+</body>
+</html>

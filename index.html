@@ -157,7 +157,7 @@
       background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
       height: 100%;
       border-radius: 6px;
-      width: 65%;
+      width: 73%;
       position: relative;
     }
 
@@ -432,7 +432,7 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>7</strong> / 11 aulas concluídas</span>
+        <span><strong>8</strong> / 11 aulas concluídas</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill"></div>
@@ -663,71 +663,104 @@
     </div>
 
     <!-- AULA 8 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 8</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">✓ Concluída</span>
       </div>
-      <div class="card-title">FSM Moore — Portão Automático · Karnaugh · Equações</div>
+      <div class="card-title">FSM Moore — Semáforo · Método MUX · LogiSim</div>
       <div class="obj-box">
-        Fluxograma de estados, tabela de transições completa e extração de equações lógicas com Mapa de Karnaugh. Verificação e geração automática do circuito com LogiSim Combinational Analysis.
+        Introdução ao Método MUX para derivar equações de FF-D diretamente da tabela de transições. Semáforo 3 estados com timer e botão de interrupção. D = (AVANÇA'·Atual) + (AVANÇA·Próximo).
       </div>
       <ul class="topics">
-        <li>Portão automático: FECHADO, ABRINDO, ABERTO, FECHANDO</li>
-        <li>Fluxograma — lógica de decisão estado a estado</li>
-        <li>Karnaugh 2×2 — agrupar células, equações mínimas D₁ e D₀</li>
-        <li>LogiSim Combinational Analysis — verificar e gerar circuito</li>
-        <li>Saídas Moore: MA (motor abre), MF (motor fecha), L (LED)</li>
+        <li>Método MUX — D = (T̄·Atual) + (T·Próximo), MUX 2:1 como FF-D</li>
+        <li>Semáforo: VERDE(00), AMARELO(01), VERMELHO(10) — 3 estados, 2 FF-D</li>
+        <li>AVANÇA = TIMER + BTN·NOR(Q₁,Q₀) — botão só no estado VERDE</li>
+        <li>D₁ = AVANÇA'·Q₁ + AVANÇA·XOR(Q₁,Q₀) — padrão em todos os casos</li>
+        <li>Timer no LogiSim: Clock + 74HC4020 (contador) — tap Q1/Q2/Q3 por estado</li>
       </ul>
       <div class="tags">
         <span class="tag">FSM</span>
         <span class="tag">Moore</span>
-        <span class="tag">Karnaugh</span>
-        <span class="tag">Portão</span>
+        <span class="tag">Método MUX</span>
+        <span class="tag">Semáforo</span>
+        <span class="tag">Timer</span>
         <span class="tag">LogiSim</span>
       </div>
       <div class="materials">
         <a class="mat-btn btn-slides" href="aula8/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="aula8/UC00652_TP08_FSM_Semaforo_MUX.docx">📄 TP08</a>
       </div>
     </div>
 
     <!-- AULA 9 -->
+    <div class="card current">
+      <div class="card-top">
+        <div class="aula-num">Aula 9 · 6 Jul</div>
+        <span class="status-badge badge-current">Atual</span>
+      </div>
+      <div class="card-title">FSM Moore — Portão Automático · Sensor de Segurança · MUX</div>
+      <div class="obj-box">
+        Aplicar o Método MUX a um sistema com 4 estados e múltiplas entradas. Sensor de segurança S_SEG cria transição de emergência FECHANDO→ABRINDO sem adicionar novos estados. AVANÇA composto diferente por estado.
+      </div>
+      <ul class="topics">
+        <li>4 estados: FECHADO(00), ABRINDO(01), ABERTO(10), FECHANDO(11)</li>
+        <li>4 entradas: BTN, S_TOP, S_BOT, S_SEG — AVANÇA diferente por estado</li>
+        <li>D₁_next = XOR(Q₁,Q₀) — padrão universal incluindo emergência</li>
+        <li>D₀_next = Q₀' + Q₁·Q₀·S_SEG — termo extra para a emergência</li>
+        <li>Diagrama de estados no Draw.io · Circuito completo no LogiSim</li>
+      </ul>
+      <div class="tags">
+        <span class="tag">FSM</span>
+        <span class="tag">Moore</span>
+        <span class="tag">Método MUX</span>
+        <span class="tag">Portão</span>
+        <span class="tag">Sensor Segurança</span>
+        <span class="tag">LogiSim</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula9/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="aula9/UC00652_TP09_FSM_Portao_Sensor.docx">📄 TP09</a>
+      </div>
+    </div>
+
+    <!-- AULA 10 -->
     <div class="card upcoming">
       <div class="card-top">
-        <div class="aula-num">Aula 9</div>
-        <span class="status-badge badge-next">Em preparação</span>
+        <div class="aula-num">Aula 10 · 19 Jul</div>
+        <span class="status-badge badge-next">Online</span>
       </div>
-      <div class="card-title">TinkerCAD — Circuito FSM Virtual</div>
+      <div class="card-title">TinkerCAD — Circuito FSM com Chips Reais</div>
       <ul class="topics">
-        <li>Simulação de breadboard com chips 74xx no TinkerCAD Circuits</li>
-        <li>Montar o circuito FSM do portão com 74HC08, 74HC32, 74HC04 e FF-D</li>
-        <li>Aula online — preparação para a prática presencial</li>
-        <li>Verificar o funcionamento antes de montar a sério</li>
+        <li>Simular o portão automático em breadboard virtual no TinkerCAD Circuits</li>
+        <li>74HC157 (MUX 4:1) · 74HC74 (FF-D duplo) · 74HC08/32/04 (lógica AND/OR/NOT)</li>
+        <li>Alimentação 5 V, pull-up nas entradas, LEDs de saída</li>
+        <li>Preparação para a montagem presencial na bancada</li>
       </ul>
       <div class="tags">
         <span class="tag">TinkerCAD</span>
-        <span class="tag">74xx</span>
+        <span class="tag">74HC157</span>
+        <span class="tag">74HC74</span>
         <span class="tag">Online</span>
       </div>
     </div>
 
-    <!-- AULAS 10–11 -->
+    <!-- AULA 11 -->
     <div class="card upcoming">
       <div class="card-top">
-        <div class="aula-num">Aulas 10–11</div>
-        <span class="status-badge badge-next">Em preparação</span>
+        <div class="aula-num">Aulas 11–12 · 20 e 27 Jul</div>
+        <span class="status-badge badge-next">Presencial</span>
       </div>
-      <div class="card-title">Bancada Física · Teste Final</div>
+      <div class="card-title">Breadboard Física · Avaliação Final</div>
       <ul class="topics">
-        <li>Aula 10: Montagem real em breadboard — alimentação 5 V, chips 74xx</li>
-        <li>Pull-up, LEDs indicadores, debounce de botões</li>
-        <li>Verificação com multímetro e osciloscópio</li>
-        <li>Aula 11: Teste Final — síntese de toda a UC</li>
+        <li>Aula 11 (20 Jul): Montagem real em breadboard — chips 74xx, alimentação 5 V</li>
+        <li>Pull-up, LEDs indicadores, debounce de botões, verificação com multímetro</li>
+        <li>Aula 12 (27 Jul): Avaliação Final (2 horas) — FSM completa: diagrama → tabela → MUX → circuito</li>
       </ul>
       <div class="tags">
         <span class="tag">Breadboard</span>
         <span class="tag">74xx</span>
-        <span class="tag">Teste</span>
+        <span class="tag">Avaliação</span>
       </div>
     </div>
 
