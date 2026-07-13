@@ -335,11 +335,11 @@
         </div>
         <div class="step-item">
           <div class="step-n">4</div>
-          <div><div class="step-title">D1 (entrada de dados FF1)</div><div class="step-desc">Pin 2 (D1) → Pin 5 (Q1). Fio direto — próximo estado de Q0 é sempre o Q0 atual!</div></div>
+          <div><div class="step-title">D2 — fio direto (próximo Q1)</div><div class="step-desc">Pin 12 (D2) → Pin 5 (Q0 atual). Fio direto — próximo Q1 = Q0 atual. Sem portas lógicas!</div></div>
         </div>
         <div class="step-item">
           <div class="step-n">5</div>
-          <div><div class="step-title">D2 com AND gate</div><div class="step-desc">7408 Gate 1: entradas = Pin 6 (!Q0) e Pin 8 (!Q1) · saída → Pin 12 (D2). Isto é D0 = !Q1·!Q0.</div></div>
+          <div><div class="step-title">D1 via AND gate (próximo Q0)</div><div class="step-desc">7408 Gate 1: Pin 6 (!Q0) e Pin 8 (!Q1) → Pin 2 (D1). D0_próximo = !Q1·!Q0 — só 1 quando em VERDE.</div></div>
         </div>
       </div>
     </div>
