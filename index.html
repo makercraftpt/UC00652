@@ -157,7 +157,7 @@
       background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
       height: 100%;
       border-radius: 6px;
-      width: 73%;
+      width: 82%;
       position: relative;
     }
 
@@ -432,7 +432,7 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>8</strong> / 11 aulas concluídas</span>
+        <span><strong>9</strong> / 11 aulas concluídas</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill"></div>
@@ -694,10 +694,10 @@
     </div>
 
     <!-- AULA 9 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 9 · 6 Jul</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">✓ Concluída</span>
       </div>
       <div class="card-title">FSM Moore — Portão Automático · Sensor de Segurança · MUX</div>
       <div class="obj-box">
@@ -725,23 +725,32 @@
     </div>
 
     <!-- AULA 10 -->
-    <div class="card upcoming">
+    <div class="card current">
       <div class="card-top">
-        <div class="aula-num">Aula 10 · 19 Jul</div>
-        <span class="status-badge badge-next">Online</span>
+        <div class="aula-num">Aula 10 · 13 Jul</div>
+        <span class="status-badge badge-current">Atual</span>
       </div>
-      <div class="card-title">TinkerCAD — Circuito FSM com Chips Reais</div>
+      <div class="card-title">TinkerCAD — Semáforo FSM com Chips TTL</div>
+      <div class="obj-box">
+        Simular o semáforo FSM com chips reais no TinkerCAD Circuits. Arduino como gerador de clock e temporizador por estado. Equações simplificadas com AVANÇA=1 sempre: D₁=Q₀ (fio direto), D₀=!Q₁·!Q₀ (1 porta AND).
+      </div>
       <ul class="topics">
-        <li>Simular o portão automático em breadboard virtual no TinkerCAD Circuits</li>
-        <li>74HC157 (MUX 4:1) · 74HC74 (FF-D duplo) · 74HC08/32/04 (lógica AND/OR/NOT)</li>
-        <li>Alimentação 5 V, pull-up nas entradas, LEDs de saída</li>
-        <li>Preparação para a montagem presencial na bancada</li>
+        <li>74HC74 (FF-D duplo) · 7408 (AND) · Arduino Uno como temporizador</li>
+        <li>D₁=Q₀ (fio direto) · D₀=!Q₁·!Q₀ usando pinos Q̄ do 74HC74</li>
+        <li>Arduino lê Q₁,Q₀ e gera CLK com delay por estado: VERDE 3 s · AMARELO 0,8 s · VERMELHO 3 s</li>
+        <li>Breadboard virtual no TinkerCAD — preparação para a bancada real</li>
       </ul>
       <div class="tags">
         <span class="tag">TinkerCAD</span>
-        <span class="tag">74HC157</span>
         <span class="tag">74HC74</span>
+        <span class="tag">7408</span>
+        <span class="tag">Arduino</span>
+        <span class="tag">Semáforo</span>
         <span class="tag">Online</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula10/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="aula10/UC00652_TP10_TinkerCAD_Semaforo.docx">📄 TP10</a>
       </div>
     </div>
 
