@@ -157,7 +157,7 @@
       background: linear-gradient(90deg, var(--signal) 0%, #00E8FF 100%);
       height: 100%;
       border-radius: 6px;
-      width: 82%;
+      width: 91%;
       position: relative;
     }
 
@@ -432,7 +432,7 @@
     <div class="progress-wrap">
       <div class="progress-labels">
         <span>Progresso da UC</span>
-        <span><strong>9</strong> / 11 aulas concluídas</span>
+        <span><strong>10</strong> / 11 aulas concluídas</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill"></div>
@@ -725,10 +725,10 @@
     </div>
 
     <!-- AULA 10 -->
-    <div class="card current">
+    <div class="card done">
       <div class="card-top">
         <div class="aula-num">Aula 10 · 13 Jul</div>
-        <span class="status-badge badge-current">Atual</span>
+        <span class="status-badge badge-done">✓ Concluída</span>
       </div>
       <div class="card-title">TinkerCAD — Semáforo FSM com Chips TTL</div>
       <div class="obj-box">
@@ -755,21 +755,50 @@
     </div>
 
     <!-- AULA 11 -->
-    <div class="card upcoming">
+    <div class="card current">
       <div class="card-top">
-        <div class="aula-num">Aulas 11–12 · 20 e 27 Jul</div>
-        <span class="status-badge badge-next">Presencial</span>
+        <div class="aula-num">Aula 11 · 20 Jul</div>
+        <span class="status-badge badge-current">Atual</span>
       </div>
-      <div class="card-title">Breadboard Física · Avaliação Final</div>
+      <div class="card-title">Breadboard Física — Semáforo FSM com Chips TTL</div>
+      <div class="obj-box">
+        Montar o circuito semáforo FSM em breadboard real com chips TTL. Verificar tensões com multímetro. Confirmar que a FSM cicla corretamente: VERDE → AMARELO → VERMELHO → VERDE.
+      </div>
       <ul class="topics">
-        <li>Aula 11 (20 Jul): Montagem real em breadboard — chips 74xx, alimentação 5 V</li>
-        <li>Pull-up, LEDs indicadores, debounce de botões, verificação com multímetro</li>
-        <li>Aula 12 (27 Jul): Avaliação Final (2 horas) — FSM completa: diagrama → tabela → MUX → circuito</li>
+        <li>74HC74 (FF-D duplo) · 7408 (AND) · Arduino Uno como temporizador</li>
+        <li>Condensadores de desacoplamento 100nF · Resistências 220Ω nos LEDs</li>
+        <li>Verificação com multímetro — tensões em Q1 e Q0 por estado</li>
+        <li>Tabela de debug para identificar e corrigir erros de montagem</li>
       </ul>
       <div class="tags">
         <span class="tag">Breadboard</span>
-        <span class="tag">74xx</span>
+        <span class="tag">74HC74</span>
+        <span class="tag">7408</span>
+        <span class="tag">Arduino</span>
+        <span class="tag">Presencial</span>
+      </div>
+      <div class="materials">
+        <a class="mat-btn btn-slides" href="aula11/index.html">▶ Apresentação</a>
+        <a class="mat-btn btn-tp" href="aula11/UC00652_TP11_Breadboard_Semaforo.docx">📄 TP11</a>
+      </div>
+    </div>
+
+    <!-- AULA 12 -->
+    <div class="card upcoming">
+      <div class="card-top">
+        <div class="aula-num">Aula 12 · 27 Jul</div>
+        <span class="status-badge badge-next">Presencial</span>
+      </div>
+      <div class="card-title">Avaliação Final</div>
+      <ul class="topics">
+        <li>Duração: 2 horas · Individual · Sem consulta a colega</li>
+        <li>FSM completa desde o enunciado: diagrama → tabela de transições → equações MUX → circuito</li>
+        <li>Chips TTL no papel ou LogiSim</li>
+      </ul>
+      <div class="tags">
         <span class="tag">Avaliação</span>
+        <span class="tag">FSM</span>
+        <span class="tag">Método MUX</span>
       </div>
     </div>
 

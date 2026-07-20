@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula 11 — Breadboard Física · Semáforo FSM · UC00652</title>
+  <style>
+    :root {
+      --navy:   #0A1F3C;
+      --navy2:  #0F2A4A;
+      --navy3:  #071629;
+      --signal: #00C5FF;
+      --green:  #22C55E;
+      --amber:  #D68910;
+      --red:    #EF4444;
+      --cyan:   #06B6D4;
+      --purple: #A855F7;
+      --text:   #E8EDF5;
+      --muted:  #7A96B4;
+      --border: #1A3A5C;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { width:100%; height:100%; background:#000; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+    #deck { width:100vw; height:100vh; position:relative; }
+    .slide {
+      position:absolute; inset:0; background:var(--navy);
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none; transition:opacity 0.35s ease;
+    }
+    .slide.active { opacity:1; pointer-events:auto; }
+    .slide::before {
+      content:''; position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(0,197,255,0.03) 1px,transparent 1px);
+      background-size:50px 50px; pointer-events:none;
+    }
+    .slide-header {
+      background:var(--navy3); border-bottom:2px solid var(--signal);
+      padding:0.65rem 2.2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      position:relative; z-index:1; flex-shrink:0;
+    }
+    .slide-header h2 { font-size:1.2rem; font-weight:700; color:#fff; }
+    .slide-header .sub { font-size:0.72rem; color:var(--signal); font-style:italic; }
+    .slide-num { font-size:0.7rem; color:var(--muted); font-weight:600; letter-spacing:.05em; }
+    .slide-body { flex:1; display:flex; position:relative; z-index:1; overflow:hidden; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+    .wide-left { grid-template-columns:3fr 2fr; }
+    .col { padding:1rem 1.5rem; display:flex; flex-direction:column; gap:0.65rem; }
+    .col + .col { border-left:1px solid var(--border); }
+    .full { padding:1rem 2rem; width:100%; display:flex; flex-direction:column; gap:0.75rem; }
+    #s1 { justify-content:center; align-items:center; text-align:center; }
+    #s1::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 40%, rgba(0,197,255,0.08) 0%, transparent 70%); }
+    #s1 .tc { position:relative; z-index:2; }
+    .pill { display:inline-block; background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.3); color:var(--signal); font-size:0.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; padding:.35rem 1rem; border-radius:20px; margin-bottom:1.5rem; }
+    #s1 h1 { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; color:#fff; line-height:1.15; margin-bottom:.5rem; }
+    #s1 h1 em { font-style:normal; color:var(--signal); }
+    #s1 .tagline { font-size:.95rem; color:var(--muted); margin-top:.8rem; }
+    #s1 .tagline span { color:rgba(0,197,255,0.6); margin:0 .4rem; }
+    #s1 .course-id { margin-top:2.5rem; font-size:.78rem; color:var(--muted); }
+    h3 { font-size:.7rem; font-weight:800; color:var(--signal); text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--border); padding-bottom:.3rem; }
+    .note { font-size:.78rem; color:var(--muted); background:rgba(0,197,255,0.05); border-left:3px solid rgba(0,197,255,0.35); padding:.45rem .85rem; border-radius:0 5px 5px 0; line-height:1.5; }
+    .note.green  { border-left-color:var(--green);  background:rgba(34,197,94,0.06);   color:#86EFAC; }
+    .note.amber  { border-left-color:var(--amber);  background:rgba(214,137,16,0.06);  color:#E8C070; }
+    .note.purple { border-left-color:var(--purple); background:rgba(168,85,247,0.06);  color:#D8B4FE; }
+    .note.red    { border-left-color:var(--red);    background:rgba(239,68,68,0.06);   color:#FCA5A5; }
+    ul.pts { list-style:none; display:flex; flex-direction:column; gap:.38rem; }
+    ul.pts li { font-size:.82rem; color:var(--text); display:flex; gap:.6rem; align-items:flex-start; line-height:1.45; }
+    ul.pts li::before { content:'▸'; color:var(--signal); flex-shrink:0; font-size:.72rem; margin-top:.08rem; }
+    ul.pts li.green::before { color:var(--green); }
+    ul.pts li.amber::before { color:var(--amber); }
+    ul.pts li.red::before   { color:var(--red); }
+    ul.pts li.purple::before { color:var(--purple); }
+    .svg-wrap { background:var(--navy2); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:center; align-items:center; flex:1; padding:.4rem; }
+    table.tt { width:100%; border-collapse:collapse; font-size:.77rem; }
+    table.tt th { background:rgba(0,197,255,0.12); color:var(--signal); font-weight:700; padding:.35rem .5rem; text-align:center; border:1px solid var(--border); font-size:.69rem; letter-spacing:.04em; }
+    table.tt td { padding:.3rem .5rem; text-align:center; border:1px solid var(--border); color:var(--text); }
+    table.tt tr.sv td { background:rgba(34,197,94,0.08);   color:#86EFAC; }
+    table.tt tr.sa td { background:rgba(214,137,16,0.08);  color:#E8C070; }
+    table.tt tr.sr td { background:rgba(239,68,68,0.08);   color:#FCA5A5; }
+    table.tt td.mono { font-family:monospace; font-size:.82rem; font-weight:700; }
+    .eq-box { background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:.65rem 1rem; font-family:monospace; font-size:.8rem; line-height:2; color:var(--text); }
+    .eq-box .em  { color:var(--signal); font-weight:700; }
+    .eq-box .cm  { color:var(--muted); font-size:.68rem; }
+    .eq-box .hi  { color:#86EFAC; font-weight:700; }
+    .eq-box .hi2 { color:#D8B4FE; font-weight:700; }
+    .step-list { display:flex; flex-direction:column; gap:.42rem; }
+    .step-item { display:flex; gap:.8rem; align-items:flex-start; background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.5rem .8rem; }
+    .step-n { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.72rem; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .step-n.ok { background:rgba(34,197,94,0.2); color:var(--green); }
+    .step-title { font-size:.82rem; font-weight:700; color:#fff; margin-bottom:.1rem; }
+    .step-desc  { font-size:.7rem; color:var(--muted); line-height:1.4; }
+    .chip-label { font-size:.65rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--signal); margin-bottom:.2rem; }
+    /* material grid */
+    .mat-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .mat-item { background:var(--navy2); border:1px solid var(--border); border-radius:7px; padding:.5rem .8rem; display:flex; align-items:center; gap:.7rem; }
+    .mat-qty { background:rgba(0,197,255,0.15); color:var(--signal); font-size:.75rem; font-weight:800; min-width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .mat-name { font-size:.8rem; font-weight:600; color:var(--text); }
+    .mat-desc { font-size:.67rem; color:var(--muted); }
+    /* nav */
+    #nav { position:fixed; bottom:1.2rem; left:50%; transform:translateX(-50%); display:flex; gap:.6rem; z-index:100; }
+    #nav button { background:rgba(0,197,255,0.12); border:1px solid rgba(0,197,255,0.25); color:var(--signal); padding:.4rem 1.1rem; border-radius:20px; font-size:.78rem; font-weight:700; cursor:pointer; transition:background .15s; }
+    #nav button:hover { background:rgba(0,197,255,0.22); }
+    #nav .pg { background:transparent; border:none; color:var(--muted); font-size:.75rem; padding:.4rem .5rem; cursor:default; }
+    /* debug table colors */
+    table.tt tr.ok td { background:rgba(34,197,94,0.08); color:#86EFAC; }
+    table.tt tr.warn td { background:rgba(214,137,16,0.08); color:#E8C070; }
+    table.tt tr.err td { background:rgba(239,68,68,0.08); color:#FCA5A5; }
+  </style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ╔═══════════╗ -->
+<!-- ║  1 — TÍTULO ║ -->
+<!-- ╚═══════════╝ -->
+<div class="slide active" id="s1">
+  <div class="tc">
+    <div class="pill">UC00652 · Aula 11 · 20 Jul</div>
+    <h1>Breadboard Física<br><em>Semáforo FSM</em></h1>
+    <p class="tagline">74HC74 <span>·</span> 7408 <span>·</span> Arduino Uno <span>·</span> Chips TTL reais</p>
+    <p class="tagline" style="margin-top:.4rem; font-size:.82rem;">Do TinkerCAD para a bancada — montar, testar, verificar</p>
+    <p class="course-id">CET · Escola Sicó · Formador: Belmiro Simões Luís</p>
+  </div>
+</div>
+
+<!-- ╔═══════════════════════╗ -->
+<!-- ║  2 — TINKERCAT → REAL ║ -->
+<!-- ╚═══════════════════════╝ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <div><h2>Do TinkerCAD para a Breadboard Real</h2><div class="sub">O circuito é o mesmo — o ambiente muda</div></div>
+    <div class="slide-num">2 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>O que é igual</h3>
+      <ul class="pts">
+        <li class="green">Equações: D1 = !Q1·!Q0 (Gate AND) · D2 = Q0 (fio direto)</li>
+        <li class="green">Chips: 74HC74 + 7408 — mesmos pinos, mesmas ligações</li>
+        <li class="green">Arduino: mesmo sketch, mesmos pinos (CLK=13, Q0=2, Q1=3)</li>
+        <li class="green">LEDs: VERDE · AMARELO · VERMELHO com resistência 220Ω</li>
+      </ul>
+      <h3 style="margin-top:.4rem;">O que muda</h3>
+      <ul class="pts">
+        <li class="amber">Fios físicos — sem undo! Verificar antes de ligar alimentação</li>
+        <li class="amber">Condensadores de desacoplamento 100nF — 1 por chip perto do VCC/GND</li>
+        <li class="amber">GND do Arduino ligado ao GND da breadboard (obrigatório)</li>
+        <li class="amber">Resistências de 220Ω nos LEDs — sem elas os LEDs queimam</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Regra de ouro da breadboard</h3>
+      <div class="note red" style="font-size:.82rem; line-height:1.7;">
+        ⚡ <strong>Nunca ligar alimentação sem verificar primeiro.</strong><br>
+        Antes de ligar o USB ao Arduino:<br>
+        1. Verificar VCC e GND de cada chip<br>
+        2. Verificar !CLR e !PR → VCC (pinos 1, 4, 10, 13)<br>
+        3. Verificar que não há curto-circuito entre linhas + e −
+      </div>
+      <h3 style="margin-top:.3rem;">Condensador de desacoplamento</h3>
+      <div class="note amber">
+        100nF (cerâmico) entre VCC e GND de cada chip, o mais perto possível dos pinos de alimentação. Elimina ruído que pode fazer o flip-flop mudar de estado espontaneamente.
+      </div>
+      <div class="note green" style="margin-top:.3rem;">
+        A breadboard tem Rails + e − nas laterais. Ligar Arduino 5V à rail + e GND à rail −. Todos os chips partilham estas rails.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔═══════════════════╗ -->
+<!-- ║  3 — MATERIAL     ║ -->
+<!-- ╚═══════════════════╝ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <div><h2>Material Necessário</h2><div class="sub">Verificar antes de começar a montar</div></div>
+    <div class="slide-num">3 / 10</div>
+  </div>
+  <div class="slide-body full">
+    <div class="mat-grid">
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">Arduino Uno</div><div class="mat-desc">Clock + temporizador por estado</div></div></div>
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">74HC74 (DIP-14)</div><div class="mat-desc">Dual D Flip-Flop — guarda Q1 e Q0</div></div></div>
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">7408 ou 74HC08 (DIP-14)</div><div class="mat-desc">Quad AND gate — D1 e LEDs</div></div></div>
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">Breadboard</div><div class="mat-desc">830 pontos (tamanho standard)</div></div></div>
+      <div class="mat-item"><div class="mat-qty">3×</div><div><div class="mat-name">LED (verde, amarelo, vermelho)</div><div class="mat-desc">5mm, tensão ~2V, corrente 10–20mA</div></div></div>
+      <div class="mat-item"><div class="mat-qty">3×</div><div><div class="mat-name">Resistência 220Ω</div><div class="mat-desc">Para os LEDs — obrigatório!</div></div></div>
+      <div class="mat-item"><div class="mat-qty">2×</div><div><div class="mat-name">Condensador 100nF (cerâmico)</div><div class="mat-desc">Desacoplamento — 1 por chip TTL</div></div></div>
+      <div class="mat-item"><div class="mat-qty">~15×</div><div><div class="mat-name">Jumper wires</div><div class="mat-desc">Macho-macho, várias cores</div></div></div>
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">Cabo USB</div><div class="mat-desc">Para alimentar o Arduino (5V)</div></div></div>
+      <div class="mat-item"><div class="mat-qty">1×</div><div><div class="mat-name">Multímetro</div><div class="mat-desc">Para verificar tensões e continuidade</div></div></div>
+    </div>
+    <div class="note amber" style="margin-top:.5rem;">
+      💡 Sugestão de cores: <strong style="color:#EF4444">vermelho</strong> = VCC · <strong style="color:#555">preto</strong> = GND · <strong style="color:#D68910">amarelo/laranja</strong> = clock · <strong style="color:#22C55E">verde</strong> = sinais de dados
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  4 — LIGAÇÕES        ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div><h2>Tabela de Ligações — 74HC74</h2><div class="sub">Convenção: FF1 guarda Q0 · FF2 guarda Q1</div></div>
+    <div class="slide-num">4 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>74HC74 — todas as ligações</h3>
+      <table class="tt">
+        <tr><th>Pino</th><th>Função chip</th><th>FSM</th><th>Liga a</th></tr>
+        <tr><td class="mono">14</td><td>VCC</td><td>—</td><td>5V (rail +)</td></tr>
+        <tr><td class="mono">7</td><td>GND</td><td>—</td><td>GND (rail −)</td></tr>
+        <tr><td class="mono">1</td><td>!CLR1</td><td>—</td><td>VCC (desativar)</td></tr>
+        <tr><td class="mono">4</td><td>!PR1</td><td>—</td><td>VCC (desativar)</td></tr>
+        <tr><td class="mono">10</td><td>!PR2</td><td>—</td><td>VCC (desativar)</td></tr>
+        <tr><td class="mono">13</td><td>!CLR2</td><td>—</td><td>VCC (desativar)</td></tr>
+        <tr><td class="mono">3</td><td>CLK1</td><td>CLK</td><td>Arduino pin 13</td></tr>
+        <tr><td class="mono">11</td><td>CLK2</td><td>CLK</td><td>Arduino pin 13</td></tr>
+        <tr class="sv"><td class="mono">2</td><td>D1</td><td>D0_próx</td><td>7408 Gate 1 saída</td></tr>
+        <tr class="sa"><td class="mono">12</td><td>D2</td><td>D1_próx</td><td>Pin 5 (fio direto)</td></tr>
+        <tr><td class="mono">5</td><td>Q1</td><td>Q0 atual</td><td>Arduino pin 2</td></tr>
+        <tr><td class="mono">9</td><td>Q2</td><td>Q1 atual</td><td>Arduino pin 3</td></tr>
+        <tr><td class="mono">6</td><td>!Q1</td><td>!Q0</td><td>7408 Gate 1 e Gate 3</td></tr>
+        <tr><td class="mono">8</td><td>!Q2</td><td>!Q1</td><td>7408 Gate 1 e Gate 2</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>7408 — portas AND</h3>
+      <table class="tt">
+        <tr><th>Gate</th><th>Entrada A</th><th>Entrada B</th><th>Saída → Liga a</th></tr>
+        <tr class="sv"><td>1</td><td>Pin 6 (!Q0)</td><td>Pin 8 (!Q1)</td><td>Pin 2 (D1) + LED VERDE</td></tr>
+        <tr class="sa"><td>2</td><td>Pin 8 (!Q1)</td><td>Pin 5 (Q0)</td><td>LED AMARELO</td></tr>
+        <tr class="sr"><td>3</td><td>Pin 9 (Q1)</td><td>Pin 6 (!Q0)</td><td>LED VERMELHO</td></tr>
+      </table>
+      <h3 style="margin-top:.4rem;">Atenção — pinos críticos</h3>
+      <div class="note red">
+        ⚠️ <strong>Pino 12 (D2) → Pino 5 (Q0)</strong> — fio direto, próximo Q1 = Q0 atual<br>
+        ⚠️ <strong>Pino 2 (D1) ← Gate 1</strong> — NÃO confundir com pino 3 (CLK1)!
+      </div>
+      <div class="note amber" style="margin-top:.3rem;">
+        100nF entre VCC e GND de cada chip — colocar o condensador mesmo ao lado dos pinos 14 e 7.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  5 — MONTAGEM        ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <div><h2>Montagem — Passo a Passo</h2><div class="sub">Seguir esta ordem para evitar erros</div></div>
+    <div class="slide-num">5 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n">1</div>
+          <div><div class="step-title">Colocar chips na breadboard</div><div class="step-desc">74HC74 e 7408 centrados, straddling o canal central. Verificar que todos os pinos encaixaram.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">2</div>
+          <div><div class="step-title">Alimentação das rails</div><div class="step-desc">Arduino 5V → rail + · Arduino GND → rail −. Verificar com multímetro: deve ler 5V entre + e −.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">3</div>
+          <div><div class="step-title">Condensadores de desacoplamento</div><div class="step-desc">100nF entre VCC (pin 14) e GND (pin 7) de cada chip — colocar o mais perto possível.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">4</div>
+          <div><div class="step-title">VCC e GND dos chips</div><div class="step-desc">74HC74: pin 14 → VCC, pin 7 → GND. 7408: pin 14 → VCC, pin 7 → GND.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">5</div>
+          <div><div class="step-title">!CLR e !PR ao VCC</div><div class="step-desc">74HC74 pinos 1, 4, 10, 13 → VCC. Ativos a LOW — sem VCC o chip fica em reset permanente!</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n">6</div>
+          <div><div class="step-title">Clock — Arduino → 74HC74</div><div class="step-desc">Arduino pin 13 → 74HC74 pin 3 (CLK1) e pin 11 (CLK2). Usar fio amarelo/laranja.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">7</div>
+          <div><div class="step-title">Fio direto: D2 = Q0</div><div class="step-desc">74HC74 pin 12 (D2) → pin 5 (Q0). Próximo Q1 = Q0 atual — fio curto, sem portas.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">8</div>
+          <div><div class="step-title">AND gate: D1 = !Q1·!Q0</div><div class="step-desc">7408 Gate 1: pin 6 (!Q0) → 7408 entrada A · pin 8 (!Q1) → 7408 entrada B · saída Gate 1 → pin 2 (D1).</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">9</div>
+          <div><div class="step-title">LEDs com resistências</div><div class="step-desc">Gate 1 → 220Ω → LED VERDE. Gate 2 → 220Ω → LED AMARELO. Gate 3 → 220Ω → LED VERMELHO. Todos os cátodos ao GND.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n">10</div>
+          <div><div class="step-title">Arduino lê Q1 e Q0</div><div class="step-desc">Pin 5 (Q0) → Arduino pin 2 · Pin 9 (Q1) → Arduino pin 3. GND comum já está ligado.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  6 — FOTOS / VÍDEO   ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s6foto">
+  <div class="slide-header">
+    <div><h2>O Circuito em Ação</h2><div class="sub">TinkerCAD · Montagem real · Vídeo</div></div>
+    <div class="slide-num">6 / 10</div>
+  </div>
+  <div class="slide-body two-col wide-left">
+    <div class="col" style="gap:0.5rem;">
+      <h3>Simulação TinkerCAD (Aula 10)</h3>
+      <div class="svg-wrap" style="flex:1; padding:0.3rem;">
+        <img src="images/TinkerCad.png" alt="Circuito TinkerCAD" style="max-height:100%; max-width:100%; border-radius:6px; object-fit:contain;">
+      </div>
+      <h3 style="margin-top:0.3rem;">Montagem Presencial (Aula 11)</h3>
+      <div class="svg-wrap" style="flex:1; padding:0.3rem;">
+        <img src="images/montagem prática.jpg" alt="Montagem na breadboard" style="max-height:100%; max-width:100%; border-radius:6px; object-fit:contain;">
+      </div>
+    </div>
+    <div class="col">
+      <h3>Vídeo — FSM a funcionar</h3>
+      <div class="svg-wrap" style="flex:1; flex-direction:column; padding:0.4rem;">
+        <video controls style="max-height:100%; max-width:100%; border-radius:6px;">
+          <source src="images/VID_20260720_185035.mp4" type="video/mp4">
+          O teu browser não suporta vídeo HTML5.
+        </video>
+      </div>
+      <div class="note green" style="margin-top:0.4rem;">
+        ✅ Do LogiSim ao TinkerCAD à breadboard real — o mesmo circuito FSM em três ambientes!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════╗ -->
+<!-- ║  7 — VERIFICAÇÃO         ║ -->
+<!-- ╚══════════════════════════╝ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div><h2>Verificação com Multímetro</h2><div class="sub">Antes de ligar — depois de ligar</div></div>
+    <div class="slide-num">7 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Antes de ligar o USB</h3>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">Continuidade VCC e GND de cada chip</div><div class="step-desc">Modo continuidade (bip): pin 14 do 74HC74 → rail + · pin 7 → rail −. Repetir para o 7408.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">!CLR e !PR em VCC</div><div class="step-desc">Continuidade: pins 1, 4, 10, 13 do 74HC74 → rail +</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">Sem curto-circuito rail + / rail −</div><div class="step-desc">Resistência entre + e − deve ser > 100Ω. Se bipa, há curto — não ligar!</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">Fio direto pin 12 → pin 5</div><div class="step-desc">Continuidade entre pin 12 (D2) e pin 5 (Q0). Deve bip.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Depois de ligar o USB</h3>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">Tensão nas rails</div><div class="step-desc">Modo tensão DC: rail + → rail − deve ler ~5V. Se lê 0V, o Arduino não está a fornecer VCC.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">Tensão nos pinos Q1 e Q0</div><div class="step-desc">Pin 5 e pin 9 devem alternar entre ~0V (LOW) e ~5V (HIGH) conforme o estado muda.</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-n ok">✓</div>
+          <div><div class="step-title">LED aceso corresponde ao estado</div><div class="step-desc">Q1=0, Q0=0 → VERDE · Q1=0, Q0=1 → AMARELO · Q1=1, Q0=0 → VERMELHO</div></div>
+        </div>
+      </div>
+      <div class="note red" style="margin-top:.3rem;">
+        Se o circuito ficar preso num estado: verificar pino 12 (D2) → pino 5 (Q0). Este fio é o mais crítico!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  7 — DEBUG           ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <div><h2>Debug — Problemas Comuns</h2><div class="sub">O que fazer quando algo não funciona</div></div>
+    <div class="slide-num">8 / 10</div>
+  </div>
+  <div class="slide-body full">
+    <table class="tt">
+      <tr><th>Sintoma</th><th>Causa provável</th><th>Solução</th></tr>
+      <tr class="err"><td>Nenhum LED acende</td><td>VCC ou GND dos chips não ligado</td><td>Verificar pins 14 e 7 de cada chip com multímetro</td></tr>
+      <tr class="err"><td>Chip fica sempre em reset (Q=0)</td><td>!CLR ou !PR não ligados ao VCC</td><td>Verificar pins 1, 4, 10, 13 do 74HC74 → VCC</td></tr>
+      <tr class="warn"><td>Estado AMARELO fica preso</td><td>Pin 12 (D2) não ligado ao pin 5 (Q0)</td><td>Verificar fio direto pin 12 → pin 5 com continuidade</td></tr>
+      <tr class="warn"><td>LEDs acendem na ordem errada</td><td>Entradas do Gate 2 ou 3 trocadas</td><td>Verificar: Gate 2 = !Q1(pin8) AND Q0(pin5) · Gate 3 = Q1(pin9) AND !Q0(pin6)</td></tr>
+      <tr class="warn"><td>LED não acende ou muito fraco</td><td>Resistência em falta ou LED invertido</td><td>Verificar polaridade do LED (ânodo → resistência → gate, cátodo → GND)</td></tr>
+      <tr class="err"><td>FSM muda estado aleatoriamente</td><td>Sem condensador de desacoplamento</td><td>Colocar 100nF entre VCC e GND de cada chip</td></tr>
+      <tr class="warn"><td>Arduino não lê Q1, Q0 correto</td><td>GND do Arduino não ligado à rail −</td><td>Ligar GND do Arduino ao GND da breadboard</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  8 — TESTES FSM      ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <div><h2>Testes — Verificar a FSM</h2><div class="sub">Medir e registar Q1, Q0 e LEDs em cada estado</div></div>
+    <div class="slide-num">9 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Tabela de verificação de estados</h3>
+      <table class="tt">
+        <tr><th>Estado</th><th>Q1 (pin 9)</th><th>Q0 (pin 5)</th><th>LED</th><th>Tempo</th></tr>
+        <tr class="sv"><td>VERDE</td><td>0V</td><td>0V</td><td>Verde ✓</td><td>~3 s</td></tr>
+        <tr class="sa"><td>AMARELO</td><td>0V</td><td>5V</td><td>Amarelo ✓</td><td>~0,8 s</td></tr>
+        <tr class="sr"><td>VERMELHO</td><td>5V</td><td>0V</td><td>Vermelho ✓</td><td>~3 s</td></tr>
+      </table>
+      <h3 style="margin-top:.5rem;">Sequência esperada</h3>
+      <div class="eq-box" style="font-size:.78rem; line-height:2.2;">
+        <span class="hi">VERDE</span> (3 s) → <span style="color:#E8C070;">AMARELO</span> (0,8 s) → <span style="color:#FCA5A5;">VERMELHO</span> (3 s) → <span class="hi">VERDE</span> → …<br>
+        <span class="cm">// ciclo infinito, sem botões, AVANÇA = 1 sempre</span>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Verificação com multímetro — preencher</h3>
+      <table class="tt">
+        <tr><th>Estado</th><th>Medição Q1</th><th>Medição Q0</th><th>OK?</th></tr>
+        <tr class="sv"><td>VERDE</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td></td></tr>
+        <tr class="sa"><td>AMARELO</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td></td></tr>
+        <tr class="sr"><td>VERMELHO</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td>&nbsp;&nbsp;&nbsp;&nbsp; V</td><td></td></tr>
+      </table>
+      <div class="note purple" style="margin-top:.5rem;">
+        🎯 <strong>Desafio:</strong> alterar o sketch do Arduino para VERDE = 5 s, AMARELO = 1 s, VERMELHO = 4 s. O circuito de chips não muda nada — só o código!
+      </div>
+      <div class="note green" style="margin-top:.3rem;">
+        ✅ Quando o circuito funciona, fotografar para o portfolio. Parabéns — é uma FSM real em chips TTL!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════╗ -->
+<!-- ║  9 — TP11            ║ -->
+<!-- ╚══════════════════════╝ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <div><h2>TP11 — Trabalho Prático</h2><div class="sub">Montagem, verificação e registo</div></div>
+    <div class="slide-num">10 / 10</div>
+  </div>
+  <div class="slide-body two-col">
+    <div class="col">
+      <h3>Exercícios obrigatórios</h3>
+      <ul class="pts">
+        <li><strong>Ex. 1</strong> — Montar o circuito completo na breadboard seguindo a tabela de ligações</li>
+        <li><strong>Ex. 2</strong> — Verificar com multímetro e preencher a tabela de tensões (Q1 e Q0 em cada estado)</li>
+        <li><strong>Ex. 3</strong> — Registar a sequência de LEDs e confirmar que a FSM cicla corretamente</li>
+        <li><strong>Ex. 4</strong> — Fotografar o circuito montado e identificar cada chip e ligação</li>
+      </ul>
+      <h3 style="margin-top:.4rem;">Desafio</h3>
+      <ul class="pts">
+        <li class="purple">Alterar os timings no sketch Arduino: VERDE 5 s · AMARELO 1 s · VERMELHO 4 s</li>
+        <li class="purple">Adicionar um 4.º LED (azul) que acende sempre que o estado muda (pulso de clock)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Próxima aula — Avaliação Final</h3>
+      <div class="note amber">
+        <strong>Aula 12 · 27 Jul · 2 horas</strong><br><br>
+        Avaliação individual — sem consulta a colega.<br>
+        Formato: FSM completa desde o enunciado até ao circuito.<br><br>
+        ▸ Diagrama de estados<br>
+        ▸ Tabela de transições<br>
+        ▸ Equações pelo Método MUX<br>
+        ▸ Circuito com chips TTL (papel ou LogiSim)
+      </div>
+      <div class="note green" style="margin-top:.4rem;">
+        ✅ Hoje é a última aula prática antes da avaliação. Aproveitar para consolidar dúvidas!
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div id="nav">
+  <button onclick="go(-1)">← Anterior</button>
+  <span class="pg" id="pg">1 / 9</span>
+  <button onclick="go(1)">Seguinte →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  function go(d) {
+    slides[cur].classList.remove('active');
+    cur = (cur + d + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    document.getElementById('pg').textContent = (cur+1) + ' / ' + slides.length;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+</script>
+</body>
+</html>
