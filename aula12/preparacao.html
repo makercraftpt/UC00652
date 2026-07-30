@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula de Preparação — UC00652</title>
+  <style>
+    :root {
+      --navy:      #0A1F3C;
+      --navy-mid:  #0F2A4A;
+      --signal:    #00C5FF;
+      --green:     #27AE60;
+      --amber:     #D68910;
+      --red:       #C0392B;
+      --text:      #E8EDF5;
+      --muted:     #7A96B4;
+      --border:    #1A3A5C;
+      --card:      #0F2A4A;
+      --solve-bg:  #0A2E1A;
+      --solve-bdr: #1E8449;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(160deg, #050E1C 0%, #0A1F3C 55%, #0D2847 100%);
+      border-bottom: 2px solid var(--signal);
+      padding: 2rem 2rem 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,197,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,197,255,.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+    }
+    .header-inner { position: relative; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+    .header-label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--signal); margin-bottom: .3rem; }
+    header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    header .sub { color: var(--muted); font-size: .9rem; margin-top: .2rem; }
+    .badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+    .badge {
+      display: inline-block;
+      background: rgba(0,197,255,.15); border: 1px solid rgba(0,197,255,.35);
+      color: var(--signal); font-size: .72rem; font-weight: 600;
+      padding: .2rem .65rem; border-radius: 20px; letter-spacing: .05em;
+    }
+    .badge.green { background: rgba(39,174,96,.15); border-color: rgba(39,174,96,.4); color: #2ecc71; }
+
+    /* ── TIMER ── */
+    .timer-box {
+      background: rgba(0,197,255,.1); border: 1px solid rgba(0,197,255,.3);
+      border-radius: 10px; padding: .75rem 1.25rem; text-align: center; min-width: 140px;
+    }
+    .timer-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .timer-display { font-size: 2rem; font-weight: 700; color: var(--signal); font-family: 'Courier New', monospace; line-height: 1.2; }
+    .timer-btns { display: flex; gap: .4rem; margin-top: .4rem; justify-content: center; }
+    .timer-btns button {
+      padding: .2rem .6rem; border: 1px solid var(--border); border-radius: 5px;
+      background: transparent; color: var(--muted); font-size: .75rem; cursor: pointer;
+    }
+    .timer-btns button:hover { background: rgba(255,255,255,.05); color: var(--text); }
+
+    /* ── MAIN ── */
+    main { max-width: 960px; margin: 2rem auto; padding: 0 1.5rem 3rem; }
+
+    /* ── SECTION ── */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; gap: .75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-num {
+      width: 2rem; height: 2rem; border-radius: 50%;
+      background: var(--signal); color: #000;
+      font-weight: 700; font-size: .85rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-num.recap { background: var(--muted); }
+    .section-num.warn  { background: var(--amber); }
+    .section-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .section-meta  { font-size: .8rem; color: var(--muted); margin-left: auto; white-space: nowrap; }
+    .section-body  { padding: 1.25rem 1.5rem; }
+
+    /* ── MÉTODO MUX STEPS ── */
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    @media (max-width: 600px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      background: rgba(0,0,0,.25); border: 1px solid var(--border);
+      border-radius: 8px; padding: .85rem 1rem;
+      display: flex; gap: .75rem; align-items: flex-start;
+    }
+    .step-n {
+      width: 1.6rem; height: 1.6rem; border-radius: 50%;
+      background: var(--signal); color: #000;
+      font-weight: 700; font-size: .8rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text { font-size: .9rem; }
+    .step-text strong { color: var(--signal); }
+    .step-text code { font-family: 'Courier New', monospace; font-size: .85em; color: #7dd3fc; background: rgba(0,0,0,.3); padding: .1rem .3rem; border-radius: 3px; }
+
+    /* ── EXERCISE ENUNCIADO ── */
+    .enunciado { margin-bottom: 1rem; }
+    .enunciado p { margin-bottom: .6rem; font-size: .95rem; }
+    .enunciado strong { color: var(--signal); }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; margin: .75rem 0; }
+    th {
+      background: rgba(0,197,255,.12); color: var(--signal);
+      font-weight: 600; text-align: center; padding: .5rem .6rem;
+      border: 1px solid var(--border); font-size: .78rem;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    td { padding: .45rem .6rem; border: 1px solid var(--border); text-align: center; }
+    td.l { text-align: left; }
+    tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+    td code { font-family: 'Courier New', monospace; color: #7dd3fc; }
+
+    /* ── REVEAL BUTTON ── */
+    .reveal-btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(39,174,96,.15); border: 1px solid rgba(39,174,96,.4);
+      color: #2ecc71; padding: .55rem 1.2rem; border-radius: 8px;
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      transition: background .2s; margin-top: .5rem;
+    }
+    .reveal-btn:hover { background: rgba(39,174,96,.28); }
+    .reveal-btn .arrow { transition: transform .3s; display: inline-block; }
+    .reveal-btn.open .arrow { transform: rotate(90deg); }
+
+    /* ── SOLUTION ── */
+    .solution {
+      display: none;
+      margin-top: 1rem;
+      background: var(--solve-bg);
+      border: 1px solid var(--solve-bdr);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+      animation: fadeIn .25s ease;
+    }
+    .solution.visible { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .solution h4 { color: #2ecc71; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; }
+    .solution p { font-size: .9rem; margin-bottom: .5rem; }
+    .sol-step { display: flex; gap: .6rem; align-items: flex-start; margin-bottom: .6rem; font-size: .9rem; }
+    .sol-step .lbl { color: var(--signal); font-weight: 700; min-width: 60px; flex-shrink: 0; font-size: .85rem; font-family: 'Courier New', monospace; }
+
+    /* ── FORMULA BOX ── */
+    .formula {
+      background: rgba(0,197,255,.08); border: 1px solid rgba(0,197,255,.25);
+      border-radius: 6px; padding: .7rem 1rem;
+      font-family: 'Courier New', monospace; font-size: .95rem;
+      color: #fff; margin: .6rem 0; line-height: 1.8;
+    }
+    .formula span { color: var(--signal); font-weight: 700; }
+
+    /* ── DIAGRAM ── */
+    .diagram {
+      font-family: 'Courier New', monospace; font-size: .78rem;
+      background: rgba(0,0,0,.35); border: 1px solid var(--border);
+      border-radius: 6px; padding: .85rem 1rem;
+      color: #b0cce8; line-height: 1.7; white-space: pre;
+      overflow-x: auto; margin: .6rem 0;
+    }
+
+    /* ── ERRORS ── */
+    .error-list { list-style: none; }
+    .error-list li {
+      display: flex; gap: .75rem; align-items: flex-start;
+      padding: .6rem 0; border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: .9rem;
+    }
+    .error-list li:last-child { border-bottom: none; }
+    .warn-icon { color: var(--amber); font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+    .error-text strong { color: var(--amber); }
+    .error-fix { color: var(--green); font-size: .82rem; margin-top: .2rem; }
+
+    /* ── MINI EXER ── */
+    .mini-box {
+      background: rgba(214,137,16,.08); border: 1px solid rgba(214,137,16,.3);
+      border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    }
+    .mini-box h4 { color: var(--amber); font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+
+    /* nav */
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--muted); font-size: .85rem; text-decoration: none; }
+    .back-link:hover { color: var(--signal); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-label">UC00652 · Aula 12 · 27 Jul 2026</div>
+      <h1>Aula de Preparação — Revisão</h1>
+      <div class="sub">Hora 1 de 2 · Método MUX · Exemplos resolvidos · Para projetar</div>
+      <div class="badges">
+        <span class="badge">Método MUX</span>
+        <span class="badge">FSM</span>
+        <span class="badge green">Com corrigenda</span>
+      </div>
+    </div>
+    <div class="timer-box">
+      <div class="timer-label">Cronómetro</div>
+      <div class="timer-display" id="timerDisplay">60:00</div>
+      <div class="timer-btns">
+        <button onclick="startTimer()">▶ Start</button>
+        <button onclick="resetTimer()">↺ Reset</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <a class="back-link" href="../index.html">← Voltar ao índice</a>
+
+  <!-- ── 1. MÉTODO MUX ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num recap">R</div>
+      <div class="section-title">Recap — Os 4 Passos do Método MUX</div>
+      <div class="section-meta">15 min</div>
+    </div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-n">1</div>
+          <div class="step-text"><strong>Definir estados</strong><br>Codificar em binário. Para <em>n</em> estados: <em>k</em> FF-D onde 2<sup>k</sup> ≥ n.<br><small style="color:var(--muted)">2 estados→1 FF · 4 estados→2 FF</small></div>
+        </div>
+        <div class="step">
+          <div class="step-n">2</div>
+          <div class="step-text"><strong>Definir AVANÇA</strong><br>Condição booleana que faz a FSM avançar.<br><code>AVANÇA=0</code> → self-loop · <code>AVANÇA=1</code> → avança</div>
+        </div>
+        <div class="step">
+          <div class="step-n">3</div>
+          <div class="step-text"><strong>Tabela de transições</strong><br>Por estado: condição de AVANÇA e estado seguinte (Q1_next, Q0_next).</div>
+        </div>
+        <div class="step">
+          <div class="step-n">4</div>
+          <div class="step-text"><strong>Equação D pelo Método MUX</strong><br><code>D = AVANÇA' · Q_actual + AVANÇA · Q_next</code></div>
+        </div>
+      </div>
+      <div class="formula" style="margin-top:1rem; text-align:center; font-size:1.05rem">
+        <span>D</span> &nbsp;=&nbsp; <span>AVANÇA'</span> · Q<sub>actual</sub> &nbsp;+&nbsp; <span>AVANÇA</span> · Q<sub>next</sub>
+        <br><small style="color:var(--muted); font-family:sans-serif; font-size:.78rem">AVANÇA' = !(AVANÇA) &nbsp;·&nbsp; Quando AVANÇA=0: D=Q_actual (fica) &nbsp;·&nbsp; Quando AVANÇA=1: D=Q_next (avança)</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. TORNIQUETE ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">1</div>
+      <div class="section-title">Exemplo Guiado — Torniquete de Metro</div>
+      <div class="section-meta">20 min</div>
+    </div>
+    <div class="section-body">
+
+      <div class="enunciado">
+        <p>Um torniquete de metro tem <strong>2 estados</strong>. Não é o tema do teste — é para aquecer o método.</p>
+        <table>
+          <thead><tr><th>Estado</th><th>Código</th><th class="l">Descrição</th></tr></thead>
+          <tbody>
+            <tr><td>BLOQUEADO</td><td>0</td><td class="l">Ninguém passa</td></tr>
+            <tr><td>DESBLOQUEADO</td><td>1</td><td class="l">Passa uma pessoa</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.5rem"><strong>Entradas:</strong> &nbsp;<code>MOEDA</code> (inserir moeda) &nbsp;|&nbsp; <code>EMPURRAR</code> (pessoa empurra a haste)</p>
+        <p><strong>Regras:</strong> BLOQUEADO + MOEDA → DESBLOQUEADO · DESBLOQUEADO + EMPURRAR → BLOQUEADO</p>
+      </div>
+
+      <p style="color:var(--muted); font-size:.88rem; margin-bottom:.5rem">Resolver em conjunto com os alunos. Perguntas sugeridas abaixo.</p>
+
+      <div style="display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:.75rem">
+        <span style="background:rgba(0,197,255,.1); border:1px solid rgba(0,197,255,.25); border-radius:6px; padding:.3rem .8rem; font-size:.82rem; color:var(--signal)">❓ Quantos FF-D precisamos?</span>
+        <span style="background:rgba(0,197,255,.1); border:1px solid rgba(0,197,255,.25); border-radius:6px; padding:.3rem .8rem; font-size:.82rem; color:var(--signal)">❓ AVANÇA em BLOQUEADO?</span>
+        <span style="background:rgba(0,197,255,.1); border:1px solid rgba(0,197,255,.25); border-radius:6px; padding:.3rem .8rem; font-size:.82rem; color:var(--signal)">❓ Q0_next quando AVANÇA=1 em DESBLOQUEADO?</span>
+      </div>
+
+      <button class="reveal-btn" onclick="toggle(this, 'sol-torniquete')">
+        <span class="arrow">▶</span> Ver solução completa
+      </button>
+
+      <div class="solution" id="sol-torniquete">
+        <h4>✔ Solução — Torniquete</h4>
+
+        <div class="sol-step">
+          <div class="lbl">Passo 1</div>
+          <div>2 estados → <strong>1 FF-D</strong> (Q0). BLOQUEADO=0 · DESBLOQUEADO=1</div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Passo 2</div>
+          <div>
+            AVANÇA por estado:<br>
+            · Em BLOQUEADO (Q0=0): AVANÇA = <code>MOEDA</code><br>
+            · Em DESBLOQUEADO (Q0=1): AVANÇA = <code>EMPURRAR</code><br>
+            <div class="formula" style="margin-top:.4rem">AVANÇA = !Q0·MOEDA + Q0·EMPURRAR</div>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Passo 3</div>
+          <div>
+            <table>
+              <thead><tr><th>Estado</th><th>Q0</th><th>AVANÇA (condição)</th><th>Q0_next</th></tr></thead>
+              <tbody>
+                <tr><td>BLOQUEADO</td><td>0</td><td><code>MOEDA</code></td><td>1</td></tr>
+                <tr><td>DESBLOQUEADO</td><td>1</td><td><code>EMPURRAR</code></td><td>0</td></tr>
+              </tbody>
+            </table>
+            <small style="color:var(--muted)">Q0_next = !Q0 em ambos os casos → Q0 alterna sempre que AVANÇA=1</small>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Passo 4</div>
+          <div>
+            Método MUX com Q0_next = !Q0:
+            <div class="formula">D0 = AVANÇA' · Q0 + AVANÇA · !Q0 &nbsp;=&nbsp; XOR(Q0, AVANÇA)</div>
+            Ou seja: D0 = Q0 · !EMPURRAR + !Q0 · MOEDA &nbsp;<span style="color:var(--muted); font-size:.82rem">(substituindo AVANÇA diretamente)</span>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Diagrama</div>
+          <div>
+            <div class="diagram">          MOEDA                   EMPURRAR
+         ┌────────────────────────────────────────┐
+         │                                        │
+         ▼          MOEDA                         │
+   ┌───────────┐  ──────▶  ┌──────────────────┐  │
+   │ BLOQUEADO │            │  DESBLOQUEADO    │  │
+   │    (0)    │  ◀──────  │       (1)        │──┘
+   └───────────┘  EMPURRAR  └──────────────────┘
+    self-loop: !MOEDA         self-loop: !EMPURRAR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. MINI-EXERCÍCIO ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">2</div>
+      <div class="section-title">Mini-exercício Individual — Semáforo Pedonal</div>
+      <div class="section-meta">15 min</div>
+    </div>
+    <div class="section-body">
+
+      <div class="mini-box">
+        <h4>⏱ Enunciado (dar aos alunos — 10 min individual)</h4>
+        <p style="margin-bottom:.5rem">Um semáforo pedonal tem 3 estados que se sucedem sempre na mesma ordem:</p>
+        <table>
+          <thead><tr><th>Estado</th><th>Código</th><th class="l">Descrição</th></tr></thead>
+          <tbody>
+            <tr><td>VERDE_PEAO</td><td>00</td><td class="l">Peões podem atravessar</td></tr>
+            <tr><td>PISCA_PEAO</td><td>01</td><td class="l">Verde a piscar — preparar para parar</td></tr>
+            <tr><td>VERMELHO_PEAO</td><td>10</td><td class="l">Peões aguardam</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.5rem"><strong>Entrada:</strong> <code>TIMER</code> — dispara quando o tempo do estado actual terminou</p>
+        <p style="margin-top:.3rem"><strong>Pede-se:</strong> (1) Tabela de transições completa &nbsp;·&nbsp; (2) Expressão de AVANÇA</p>
+      </div>
+
+      <p style="color:var(--muted); font-size:.88rem; margin-bottom:.75rem">Circular pela sala durante 10 min. Depois corrigir em conjunto com a solução abaixo.</p>
+
+      <button class="reveal-btn" onclick="toggle(this, 'sol-semped')">
+        <span class="arrow">▶</span> Ver solução completa
+      </button>
+
+      <div class="solution" id="sol-semped">
+        <h4>✔ Solução — Semáforo Pedonal</h4>
+
+        <div class="sol-step">
+          <div class="lbl">AVANÇA</div>
+          <div>
+            Avança sempre que o TIMER dispara, independentemente do estado:
+            <div class="formula">AVANÇA = TIMER &nbsp;<span style="color:var(--muted); font-size:.82rem">(igual para todos os estados)</span></div>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Tabela</div>
+          <div>
+            <table>
+              <thead><tr><th>Estado</th><th>Q1</th><th>Q0</th><th>AVANÇA</th><th>Q1_next</th><th>Q0_next</th></tr></thead>
+              <tbody>
+                <tr><td>VERDE_PEAO</td><td>0</td><td>0</td><td><code>TIMER</code></td><td>0</td><td>1</td></tr>
+                <tr><td>PISCA_PEAO</td><td>0</td><td>1</td><td><code>TIMER</code></td><td>1</td><td>0</td></tr>
+                <tr><td>VERMELHO_PEAO</td><td>1</td><td>0</td><td><code>TIMER</code></td><td>0</td><td>0</td></tr>
+                <tr><td><em>inválido</em></td><td>1</td><td>1</td><td>—</td><td>X</td><td>X</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">D1, D0</div>
+          <div>
+            Padrão de Q1_next quando AVANÇA=1: {0, 1, 0, X} → igual a Q0 actual (com don't care)
+            <div class="formula">
+              D1 = TIMER' · Q1 + TIMER · Q0<br>
+              D0 = TIMER' · Q0 + TIMER · !Q1·!Q0
+            </div>
+            <small style="color:var(--muted)">D0_next = !Q1·!Q0 porque só fica a 1 no estado VERDE_PEAO (00)</small>
+          </div>
+        </div>
+
+        <div class="sol-step">
+          <div class="lbl">Saídas</div>
+          <div>
+            (Moore — dependem só do estado)
+            <table style="margin-top:.4rem">
+              <thead><tr><th class="l">Saída</th><th>Activa em</th><th>Expressão</th></tr></thead>
+              <tbody>
+                <tr><td class="l">LUZ_VERDE</td><td>VERDE_PEAO (00)</td><td><code>!Q1·!Q0</code></td></tr>
+                <tr><td class="l">LUZ_PISCA</td><td>PISCA_PEAO (01)</td><td><code>!Q1·Q0</code></td></tr>
+                <tr><td class="l">LUZ_VERMELHA</td><td>VERMELHO_PEAO (10)</td><td><code>Q1·!Q0</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. ERROS COMUNS ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num warn">!</div>
+      <div class="section-title">Erros Comuns — Rever antes do Teste</div>
+      <div class="section-meta">5 min</div>
+    </div>
+    <div class="section-body">
+      <ul class="error-list">
+        <li>
+          <span class="warn-icon">⚠</span>
+          <div class="error-text">
+            <strong>Esquecer os self-loops na tabela</strong><br>
+            Quando AVANÇA=0, o estado não muda: Q1_next = Q1 e Q0_next = Q0. Não deixar a linha em branco.
+            <div class="error-fix">✔ Escrever "self-loop" ou repetir o estado actual na coluna Q_next.</div>
+          </div>
+        </li>
+        <li>
+          <span class="warn-icon">⚠</span>
+          <div class="error-text">
+            <strong>Esquecer o AVANÇA' na equação D</strong><br>
+            Escrever só <code>D = Q_next</code> em vez de <code>D = AVANÇA'·Q + AVANÇA·Q_next</code> — perde os self-loops.
+            <div class="error-fix">✔ A equação tem sempre dois termos: um com AVANÇA' e outro com AVANÇA.</div>
+          </div>
+        </li>
+        <li>
+          <span class="warn-icon">⚠</span>
+          <div class="error-text">
+            <strong>AVANÇA diferente por estado</strong><br>
+            Em cada estado a condição de AVANÇA pode ser diferente (ex.: START em ESPERA, TIMER nos outros).
+            <div class="error-fix">✔ Preencher a coluna AVANÇA linha a linha na tabela de transições.</div>
+          </div>
+        </li>
+        <li>
+          <span class="warn-icon">⚠</span>
+          <div class="error-text">
+            <strong>Saídas Moore com entradas</strong><br>
+            <code>LED_PRONTO = !Q1·!Q0·START</code> — errado. Moore depende só do estado, nunca das entradas.
+            <div class="error-fix">✔ Saídas Moore = função de Q1, Q0 apenas.</div>
+          </div>
+        </li>
+        <li>
+          <span class="warn-icon">⚠</span>
+          <div class="error-text">
+            <strong>AVANÇA' confundido com AVANÇA</strong><br>
+            No primeiro termo da equação D: é <code>AVANÇA'</code> (NOT AVANÇA), não <code>AVANÇA</code>.
+            <div class="error-fix">✔ AVANÇA' = !(AVANÇA). Quando AVANÇA=0 → AVANÇA'=1 → D=Q_actual (fica no estado).</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── LIGAÇÃO AO FORMULÁRIO ── -->
+  <div style="text-align:center; padding: 1rem 0 .5rem; color: var(--muted); font-size:.9rem">
+    Formulário de referência disponível em →
+    <a href="formulario.html" style="color:var(--signal); text-decoration:none; font-weight:600">aula12/formulario.html</a>
+    &nbsp;·&nbsp;
+    <a href="../index.html" style="color:var(--muted); font-size:.85rem">Voltar ao índice</a>
+  </div>
+
+</main>
+
+<script>
+  // ── REVEAL TOGGLE ──
+  function toggle(btn, id) {
+    const sol = document.getElementById(id);
+    sol.classList.toggle('visible');
+    btn.classList.toggle('open');
+    btn.querySelector('.arrow').textContent = sol.classList.contains('visible') ? '▼' : '▶';
+    btn.childNodes[1].textContent = sol.classList.contains('visible') ? ' Esconder solução' : ' Ver solução completa';
+  }
+
+  // ── TIMER ──
+  let timerInterval = null;
+  let seconds = 3600;
+
+  function updateDisplay() {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    const display = document.getElementById('timerDisplay');
+    display.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (seconds <= 300) display.style.color = '#e74c3c';
+    else if (seconds <= 600) display.style.color = '#e67e22';
+    else display.style.color = 'var(--signal)';
+  }
+
+  function startTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; return; }
+    timerInterval = setInterval(() => {
+      if (seconds > 0) { seconds--; updateDisplay(); }
+      else { clearInterval(timerInterval); timerInterval = null; }
+    }, 1000);
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval); timerInterval = null;
+    seconds = 3600; updateDisplay();
+  }
+</script>
+
+</body>
+</html>

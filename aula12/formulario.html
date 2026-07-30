@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Referência — UC00652</title>
+  <style>
+    :root {
+      --navy:       #0A1F3C;
+      --navy-mid:   #0F2A4A;
+      --navy-light: #122847;
+      --signal:     #00C5FF;
+      --text:       #E8EDF5;
+      --muted:      #7A96B4;
+      --border:     #1A3A5C;
+      --card:       #0F2A4A;
+      --green:      #1E8449;
+      --amber:      #D68910;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 0 0 3rem;
+    }
+
+    header {
+      background: linear-gradient(160deg, #050E1C 0%, #0A1F3C 55%, #0D2847 100%);
+      border-bottom: 2px solid var(--signal);
+      padding: 2rem 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,197,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,197,255,0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+    }
+    .header-label {
+      font-size: .75rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--signal);
+      margin-bottom: .4rem;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: .3rem;
+    }
+    header .subtitle {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: .7rem;
+      background: rgba(0,197,255,.15);
+      border: 1px solid rgba(0,197,255,.35);
+      color: var(--signal);
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .25rem .75rem;
+      border-radius: 20px;
+      letter-spacing: .06em;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+    .card.full { grid-column: 1 / -1; }
+    .card.accent { border-color: rgba(0,197,255,.4); }
+
+    .card h2 {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--signal);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: .5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Formula box */
+    .formula-box {
+      background: rgba(0,197,255,.07);
+      border: 1px solid rgba(0,197,255,.25);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: #fff;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .note {
+      background: rgba(214,137,16,.1);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 6px 6px 0;
+      padding: .75rem 1rem;
+      font-size: .85rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .note + .note { margin-top: .5rem; }
+    .note strong { color: var(--signal); }
+
+    /* Steps */
+    .steps { list-style: none; counter-reset: step; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: .75rem;
+      align-items: flex-start;
+      padding: .45rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      font-size: .9rem;
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: counter(step);
+      min-width: 1.5rem;
+      height: 1.5rem;
+      background: var(--signal);
+      color: #000;
+      font-weight: 700;
+      font-size: .75rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .step-code { font-family: 'Courier New', monospace; color: var(--signal); }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      margin-top: .5rem;
+    }
+    th {
+      background: rgba(0,197,255,.12);
+      color: var(--signal);
+      font-weight: 600;
+      text-align: center;
+      padding: .5rem .6rem;
+      border: 1px solid var(--border);
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    td {
+      padding: .4rem .6rem;
+      border: 1px solid var(--border);
+      text-align: center;
+      color: var(--text);
+    }
+    td.left { text-align: left; }
+    tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+
+    /* Pinout */
+    .pinout {
+      font-family: 'Courier New', monospace;
+      font-size: .78rem;
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .75rem 1rem;
+      color: #b0cce8;
+      line-height: 1.6;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* Identities */
+    .identity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35rem;
+      font-size: .85rem;
+    }
+    .identity {
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: .35rem .6rem;
+      font-family: 'Courier New', monospace;
+      color: var(--text);
+    }
+
+    code {
+      background: rgba(0,197,255,.12);
+      border: 1px solid rgba(0,197,255,.2);
+      border-radius: 3px;
+      padding: .1rem .35rem;
+      font-size: .85em;
+      font-family: 'Courier New', monospace;
+      color: var(--signal);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: .75rem;
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; color: #111; padding: 0; }
+      header { background: #fff; border-bottom: 2px solid #0077aa; }
+      header::before { display: none; }
+      header h1 { color: #0a1f3c; }
+      header .subtitle, .header-label { color: #444; }
+      .badge { background: #e8f4ff; border-color: #0077aa; color: #0077aa; }
+      .card { background: #f8fbff; border-color: #ccc; break-inside: avoid; }
+      .card h2 { color: #0077aa; border-color: #ccc; }
+      .formula-box { background: #eef7ff; border-color: #99ccee; color: #000; }
+      .note { background: #fffbe8; border-color: #c8960a; color: #111; }
+      .note strong { color: #0077aa; }
+      th { background: #ddeeff; color: #005588; }
+      td { color: #111; }
+      .pinout { background: #f0f0f0; color: #222; border-color: #ccc; }
+      .identity { background: #f5f5f5; border-color: #ccc; color: #111; }
+      code { background: #eef; color: #005; }
+      footer { color: #666; border-color: #ccc; }
+      main { display: block; }
+      .card { margin-bottom: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">UC00652 · Avaliação Final</div>
+  <h1>Formulário de Referência</h1>
+  <div class="subtitle">Consulta permitida durante o teste · 1 página</div>
+  <span class="badge">Método MUX · FSM · Álgebra Booleana</span>
+</header>
+
+<main>
+
+  <!-- MÉTODO MUX (full width) -->
+  <div class="card full accent">
+    <h2>Método MUX — FSM com Flip-Flops D</h2>
+
+    <ol class="steps">
+      <li><strong>Definir os estados</strong> — codificar em binário (<span class="step-code">Q1 Q0</span>). Para <em>n</em> estados precisamos de <em>k</em> FF-D onde 2<sup>k</sup> ≥ n.<br>
+        <span style="color:var(--muted);font-size:.82rem">2 estados → 1 FF &nbsp;|&nbsp; 4 estados → 2 FF &nbsp;|&nbsp; 8 estados → 3 FF</span>
+      </li>
+      <li><strong>Definir AVANÇA</strong> — condição booleana que faz a FSM avançar de estado (sensores, botões, timer…)</li>
+      <li><strong>Preencher a tabela de transições</strong> — para cada estado: condição de AVANÇA, estado seguinte (<span class="step-code">Q1_next, Q0_next</span>)</li>
+      <li><strong>Calcular D com a fórmula MUX</strong></li>
+      <li><strong>Implementar saídas Moore</strong> — dependem apenas do estado (<span class="step-code">Q1, Q0</span>), nunca das entradas</li>
+    </ol>
+
+    <div class="formula-box" style="margin-top:1rem">
+      D &nbsp;=&nbsp; AVANÇA' · Q<sub>actual</sub> &nbsp;+&nbsp; AVANÇA · Q<sub>next</sub>
+    </div>
+
+    <div class="note">
+      <strong>Notação:</strong> &nbsp;<code>AVANÇA'</code> = <code>!(AVANÇA)</code> — complemento (NOT) de AVANÇA
+    </div>
+    <div class="note" style="margin-top:.5rem">
+      <strong>AVANÇA</strong> é o sinal que agrupa <em>todas as condições</em> (sensores, botões, timer…) que fazem a FSM avançar.<br>
+      &nbsp;· <code>AVANÇA = 0</code> → estado mantém-se &nbsp;(self-loop: D = Q<sub>actual</sub>)<br>
+      &nbsp;· <code>AVANÇA = 1</code> → estado avança &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(D = Q<sub>next</sub>)
+    </div>
+  </div>
+
+  <!-- PADRÕES DE Q_next -->
+  <div class="card">
+    <h2>Padrões frequentes de Q_next</h2>
+    <table>
+      <thead><tr><th>Q_next</th><th>Sequência</th><th>Expressão</th></tr></thead>
+      <tbody>
+        <tr><td>XOR(Q1,Q0)</td><td class="left" style="font-size:.8rem">01→10→11→00</td><td><code>Q1⊕Q0</code></td></tr>
+        <tr><td>!Q0</td><td class="left" style="font-size:.8rem">Q0 alterna sempre</td><td><code>!Q0</code></td></tr>
+        <tr><td>Q0 (cópia)</td><td class="left" style="font-size:.8rem">próx. Q1 = atual Q0</td><td><code>Q0</code></td></tr>
+        <tr><td>!Q1·!Q0</td><td class="left" style="font-size:.8rem">só activo em 00</td><td><code>!Q1·!Q0</code></td></tr>
+        <tr><td>Q1·Q0</td><td class="left" style="font-size:.8rem">só activo em 11</td><td><code>Q1·Q0</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PORTAS LÓGICAS -->
+  <div class="card">
+    <h2>Portas Lógicas</h2>
+    <table>
+      <thead><tr><th>Função</th><th>Expressão</th><th>Chip</th></tr></thead>
+      <tbody>
+        <tr><td class="left">AND 2 entradas</td><td><code>A · B</code></td><td>7408</td></tr>
+        <tr><td class="left">OR 2 entradas</td><td><code>A + B</code></td><td>7432</td></tr>
+        <tr><td class="left">NOT</td><td><code>!A</code></td><td>7404</td></tr>
+        <tr><td class="left">NAND</td><td><code>!(A·B)</code></td><td>7400</td></tr>
+        <tr><td class="left">XOR</td><td><code>A ⊕ B</code></td><td>7486</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 74HC74 -->
+  <div class="card">
+    <h2>74HC74 — Dual D Flip-Flop</h2>
+    <div class="pinout">     ┌──────────┐
+!CLR1─┤1       14├─VCC
+   D1─┤2       13├─!CLR2
+ CLK1─┤3       12├─D2
+ !PR1─┤4       11├─CLK2
+   Q1─┤5       10├─!PR2
+  !Q1─┤6        9├─Q2
+  GND─┤7        8├─!Q2
+     └──────────┘</div>
+    <div class="note" style="margin-top:.75rem;font-size:.8rem">
+      <strong>Convenção UC00652:</strong><br>
+      FF1 = Q0 da FSM → pin 5 = Q0 · pin 6 = !Q0<br>
+      FF2 = Q1 da FSM → pin 9 = Q1 · pin 8 = !Q1<br>
+      !CLR e !PR → ligar a <strong>VCC</strong> · Dispara na <strong>subida ↑</strong> do CLK
+    </div>
+  </div>
+
+  <!-- 74HC157 -->
+  <div class="card">
+    <h2>74HC157 — MUX 2:1 (Método MUX)</h2>
+    <table style="margin-bottom:.75rem">
+      <thead><tr><th>SEL (AVANÇA)</th><th>Saída D</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Entrada A = Q<sub>actual</sub></td></tr>
+        <tr><td>1</td><td>Entrada B = Q<sub>next</sub></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="font-size:.82rem">
+      <strong>Ligação:</strong><br>
+      SEL → AVANÇA &nbsp;|&nbsp; Entrada A → Q<sub>actual</sub> &nbsp;|&nbsp; Entrada B → Q<sub>next</sub>
+    </div>
+  </div>
+
+  <!-- ÁLGEBRA BOOLEANA -->
+  <div class="card full">
+    <h2>Álgebra Booleana — Identidades úteis</h2>
+    <div class="identity-grid">
+      <div class="identity">A · 1 = A</div>
+      <div class="identity">A + 0 = A</div>
+      <div class="identity">A · 0 = 0</div>
+      <div class="identity">A + 1 = 1</div>
+      <div class="identity">A · !A = 0</div>
+      <div class="identity">A + !A = 1</div>
+      <div class="identity">A + A·B = A &nbsp;&nbsp;<span style="color:var(--muted)">(absorção)</span></div>
+      <div class="identity">A·(A+B) = A &nbsp;<span style="color:var(--muted)">(absorção)</span></div>
+      <div class="identity">!(A·B) = !A + !B &nbsp;<span style="color:var(--muted)">(De Morgan)</span></div>
+      <div class="identity">!(A+B) = !A · !B &nbsp;<span style="color:var(--muted)">(De Morgan)</span></div>
+      <div class="identity">A⊕B = A·!B + !A·B &nbsp;<span style="color:var(--muted)">(XOR)</span></div>
+      <div class="identity">A⊕0 = A &nbsp;|&nbsp; A⊕1 = !A</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  UC00652 · CET Técnico/a Especialista em Automação, Robótica e Controlo Industrial · Escola Sicó · 2025–2026
+</footer>
+
+</body>
+</html>
